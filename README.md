@@ -1,2 +1,2 @@
 # graduationChallenge
-This is a Golf Game I made for my graduation challenge using HTML, JS, and Phaser (Game Engine).
+A browser-based golf game I made for my HS senior project using HTML, JS, and Phaser (Game Engine).
