@@ -1,251 +1,229 @@
-//setting height and width to whole window
-const height = window.innerHeight;
-const width = window.innerWidth;
+// getting the width and height of the window
+const WIDTH = window.innerWidth;
+const HEIGHT = window.innerHeight;
 
-// for number values to fit all screen
-const hr = height / 750;
-const wr = width / 1536;
+// width and height ratios to work on all screen sizes
+const WR = WIDTH / 1536;
+const HR = HEIGHT / 750;
 
-//initializing Phaser
-var game = new Phaser.Game(width, height, Phaser.AUTO);
+// initializing Phaser
+var game = new Phaser.Game(WIDTH, HEIGHT, Phaser.AUTO);
 
-//hole
+// global variables
 var hole = 1;
-//par
 var par;
-//set par for each hole
-const totalpar = [2, 5, 9, 13, 18, 23, 24, 28, 32];
-//strokes
+// set par after each hole
+const TOTAL_PAR = [2, 5, 9, 13, 18, 23, 24, 28, 32];
 var strokes;
-//score on hole
-var strokesdisp = [];
-//for displaying score
-var allscores = [];
-const scoregap = 48 * hr
-//total score
+// score on each hole
+var strokesDisp = [];
+// array to display the score
+var allScores = [];
+// total score
 var total = 0;
+const SCORE_GAP = 48 * HR
 
-//constants for every hole
-const teebox = [0, width / 18];
-var groundlevel = 7 * height / 8;
+// constants for every hole
+const TEEBOX = [0, WIDTH / 18];
+var groundLevel = 7 * HEIGHT / 8;
 
-//power and angle of ball
+// power and angle of ball
 var power;
-var truepower;
+var truePower;
 var angle;
-var radianvalue;
+var radianValue;
 var vY;
 var vX;
 
-//x and y position of ball;
-var positionx = [];
-var positiony = [];
+// x and y position of ball;
+var positionX = [];
+var positionY = [];
 
-//initial powerup boolean values
-var powerupbol = false;
-var laserbol = false;
-var gumbol = false;
-var reboostbol = null;
-var dropballbol = null;
-var icebol = null;
-//total number of powerups
-var poweruplimit = 7;
+// initial powerup boolean values
+var powerupBool = false;
+var laserBool = false;
+var gumBool = false;
+var reboostBool = null;
+var dropBool = null;
+var iceBool = null;
 
-//multiples for powerups
+// total number of powerups
+var powerupLimit = 7;
+
+// multiples for powerups
 var bXM;
 var bYM;
 var vXM;
 var vYM;
 var gravM;
 
-//if ball went in water on previous shot
-var inwater = false;
+// ball went in water on previous shot
+var inWater = false;
 
-//allplatforms
+// array of all platforms
 var plat;
 
-//text displayed on screen
-//score Information
-var disptextI;
-//ball Information
-var disptextQ;
+// text displayed on the screen
+var disptextI; // score info
+var disptextQ; // ball info
 
-//practice mode
+// practice mode
 var prac = false;
 
-//multipe to velocity and gravity for mobile
-var mobilemult;
+// multiple to velocity and gravity for mobile
+var mobileMult;
 
-//if on a mobile device or not
+// if on a mobile device or not
 var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 if (isMobile) {
-	groundlevel = 135 * height / 160;
-	mobilemult = 0.5;
+	groundLevel = 135 * HEIGHT / 160;
+	mobileMult = 0.5;
 } else {
-	mobilemult = wr;
+	mobileMult = WR;
 }
 
-//checks if user is using a firefox or safari brower
-var sUsrAg = navigator.userAgent;
-var isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor);
-
-if (isChrome || sUsrAg.match('CriOS')) {
-	window.alert("A Firefox or Safari browser is required to run this game")
-} else if (height < width) {
-	if (sUsrAg.indexOf("Firefox") > -1) {
-		everything();
-	} else if (sUsrAg.indexOf("Safari") > -1) {
-		everything();
-	} else {
-		window.alert("A Firefox or Safari browser is required to run this game")
-	}
-} else {
-	if (isChrome == false) {
-		window.alert("Please Rotate and Refresh to Play!")
-	}
+// if mobile device is in wrong orientation, then quit
+if (isMobile && HEIGHT > WIDTH) {
+	window.alert("Please Rotate and Refresh to Play!");
 }
-
-//runs everything
-function everything() {
+else { // run the game
 	var GameState = {
 		preload: function () {
-
-			//all asset names
-			const allassets = ['ipage', 'background', 'ground', 'green', 'egg', 'cup', 'flag', 'arrow', 'scorecard', 'scorecardbg', 'custombg', 'mainmenu', 'startbutton',
+			// all asset names
+			const ALL_ASSETS = ['ipage', 'background', 'ground', 'green', 'egg', 'cup', 'flag', 'arrow', 'scorecard', 'scorecardbg', 'custombg', 'mainmenu', 'startbutton',
 				'practicebutton', 'customize', 'information', 'playagain', 'nextholebutton', 'plusbutton', 'minusbutton', 'launchbutton', 'activatebutton',
-				'homebutton', 'backbutton', 'redobutton', 'water', 'sand', 'powerup', 'blackcircle', 'roundrectangle', '8ball', 'basketball', 'blackball', 'blueball',
+				'homebutton', 'backbutton', 'redobutton', 'water', 'sand', 'powerup', 'blackcircle', 'roundrectangle', '8-ball', 'basketball', 'blackball', 'blueball',
 				'bowlingball', 'darkblueball', 'greenball', 'pinkball', 'purpleball', 'redball', 'soccerball', 'tennisball', 'volleyball', 'whiteball', 'character1',
-				'character1flip', 'character2', 'character2flip', 'character3', 'character3flip', 'character4', 'character4flip', 'character5', 'character5flip',
-				'character6', 'character6flip', 'superball', 'laserball', 'minus1', 'gumball', 'bouncyball', 'mulligan', 'iceball', 'reboost', 'dropball'
+				'character1-flipped', 'character2', 'character2-flipped', 'character3', 'character3-flipped', 'character4', 'character4-flipped', 'character5', 'character5-flipped',
+				'character6', 'character6-flipped', 'superball', 'laserball', 'minus1', 'gumball', 'bouncyball', 'mulligan', 'iceball', 'reboost', 'dropball'
 			]
 
-			//all asset files
-			const allfiles = ['assets/ipage.png', 'assets/background.png', 'assets/ground.png', 'assets/green.png', 'assets/egg.png', 'assets/cup.png', 'assets/flag1.png',
-				'assets/arrow.png', 'assets/scorecard.jpg', 'assets/scorecardgreen.jpg', 'assets/custombg.png', 'assets/mainmenu.jpg', 'assets/startbutton.png',
-				'assets/practice.png', 'assets/customize.png', 'assets/information.png', 'assets/playagain.png', 'assets/nextholebutton.png',
-				'assets/plus.png', 'assets/minus.png', 'assets/launch.png', 'assets/activatebutton.png', 'assets/home.png', 'assets/backbutton.png', 'assets/redo.png',
-				'assets/water.png', 'assets/sand.png', 'assets/powerup.png', 'assets/blackcircle.png', 'assets/roundrectangle.png', 'assets/8ball.png', 'assets/basketball.png',
-				'assets/blackball.png', 'assets/blueball.png', 'assets/bowlingball.png', 'assets/darkblueball.png', 'assets/greenball.png', 'assets/pinkball.png',
-				'assets/purpleball.png', 'assets/redball.png', 'assets/soccerball.png', 'assets/tennisball.png', 'assets/volleyball.png', 'assets/whiteball.png',
-				'assets/character1.png', 'assets/character1flip.png', 'assets/character2.png', 'assets/character2flip.png', 'assets/character3.png', 'assets/character3flip.png',
-				'assets/character4.png', 'assets/character4flip.png', 'assets/character5.png', 'assets/character5flip.png', 'assets/character6.png', 'assets/character6flip.png',
-				'assets/superball.png', 'assets/laserball.png', 'assets/-1.png', 'assets/gumball.png', 'assets/bouncyball.png', 'assets/mulligan.png', 'assets/iceball.png',
-				'assets/reboost.png', 'assets/instantstop.png'
+			// all asset files
+			const ALL_FILES = ['assets/iPage.png', 'assets/background.png', 'assets/ground.png', 'assets/green.png', 'assets/egg.png', 'assets/cup.png', 'assets/flag.png',
+				'assets/arrow.png', 'assets/scoreCard.jpg', 'assets/scoreCardBg.jpg', 'assets/customBg.png', 'assets/mainMenu.jpg', 'assets/startButton.png',
+				'assets/practice.png', 'assets/customize.png', 'assets/information.png', 'assets/playAgain.png', 'assets/nextHoleButton.png',
+				'assets/plus.png', 'assets/minus.png', 'assets/launch.png', 'assets/activateButton.png', 'assets/home.png', 'assets/backButton.png', 'assets/redo.png',
+				'assets/water.png', 'assets/sand.png', 'assets/powerup.png', 'assets/blackCircle.png', 'assets/roundRectangle.png', 'assets/8-ball.png', 'assets/basketball.png',
+				'assets/blackBall.png', 'assets/blueBall.png', 'assets/bowlingBall.png', 'assets/darkBlueBall.png', 'assets/greenBall.png', 'assets/pinkBall.png',
+				'assets/purpleBall.png', 'assets/redBall.png', 'assets/soccerBall.png', 'assets/tennisBall.png', 'assets/volleyBall.png', 'assets/whiteBall.png',
+				'assets/character1.png', 'assets/character1-flipped.png', 'assets/character2.png', 'assets/character2-flipped.png', 'assets/character3.png', 'assets/character3-flipped.png',
+				'assets/character4.png', 'assets/character4-flipped.png', 'assets/character5.png', 'assets/character5-flipped.png', 'assets/character6.png', 'assets/character6-flipped.png',
+				'assets/superBall.png', 'assets/laserBall.png', 'assets/minus1.png', 'assets/gumBall.png', 'assets/bouncyBall.png', 'assets/mulligan.png', 'assets/iceBall.png',
+				'assets/reboost.png', 'assets/instantStop.png'
 			]
 
-			//loading all assets
-			for (var i = 0; i < allassets.length; i++) {
-				game.load.image(allassets[i], allfiles[i]);
+			// loading all assets
+			for (var i = 0; i < ALL_ASSETS.length; i++) {
+				game.load.image(ALL_ASSETS[i], ALL_FILES[i]);
 			}
 		},
 
 		create: function () {
-			//setting initial values
+			// setting initial values
 			strokes = 0;
-			//default power and angle values
 			power = 75;
 			angle = 45;
 
-			//all sprites appear off screen unless changed in hole function
-			//background
-			background = game.add.sprite(2 * width, 2 * height, 'background');
+			// all sprites appear off screen unless changed in hole function
+			// background
+			background = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'background');
 			background.anchor.setTo(0.5, 0.5);
 			background.visible = false;
 
-			//flag
-			flag = game.add.sprite(2 * width, 2 * height, 'flag');
+			// flag
+			flag = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'flag');
 			flag.anchor.setTo(0, 1);
 
-			//hole # on flag
-			flagtext = game.add.text(2 * width, 2 * height, '', {
+			// hole # on flag
+			flagtext = game.add.text(2 * WIDTH, 2 * HEIGHT, '', {
 				font: 'Calibri',
-				fontSize: 50 * wr,
+				fontSize: 50 * WR,
 				fill: '#000000'
 			});
 			flagtext.anchor.setTo(0.5, 0.5);
 
-			//all ground/platforms
-			floor1 = game.add.sprite(2 * width, 2 * height, 'ground');
+			// all ground/platforms
+			floor1 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'ground');
 			floor1.anchor.setTo(0, 0);
 
-			floor2 = game.add.sprite(2 * width, 2 * height, 'ground');
+			floor2 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'ground');
 			floor2.anchor.setTo(0, 0);
 
-			floor3 = game.add.sprite(2 * width, 2 * height, 'ground');
+			floor3 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'ground');
 			floor3.anchor.setTo(0, 0);
 
-			ground1 = game.add.sprite(2 * width, 2 * height, 'ground');
+			ground1 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'ground');
 			ground1.anchor.setTo(0, 0);
 
-			ground2 = game.add.sprite(2 * width, 2 * height, 'ground');
+			ground2 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'ground');
 			ground2.anchor.setTo(0, 0);
 
-			ground3 = game.add.sprite(2 * width, 2 * height, 'ground');
+			ground3 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'ground');
 			ground3.anchor.setTo(0, 0);
 
-			ground4 = game.add.sprite(2 * width, 2 * height, 'ground');
+			ground4 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'ground');
 			ground4.anchor.setTo(0, 0);
 
-			ground5 = game.add.sprite(2 * width, 2 * height, 'ground');
+			ground5 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'ground');
 			ground5.anchor.setTo(0, 0);
 
-			//green
-			green = game.add.sprite(2 * width, 2 * height, 'green');
+			// green
+			green = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'green');
 			green.anchor.setTo(0.5, 0);
-			green.width = 310 * wr;
-			green.height = 10 * hr;
+			green.width = 310 * WR;
+			green.height = 10 * HR;
 
-			//cup
-			cup = game.add.sprite(2 * width, 2 * height, 'cup');
+			// cup
+			cup = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'cup');
 			cup.anchor.setTo(0, 1);
 
-			//sand
-			sand1 = game.add.sprite(2 * width, 2 * height, 'sand');
+			// sand
+			sand1 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'sand');
 			sand1.anchor.setTo(0, 0);
-			sand2 = game.add.sprite(2 * width, 2 * height, 'sand');
+			sand2 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'sand');
 			sand2.anchor.setTo(0, 0);
 
-			//water
-			water1 = game.add.sprite(2 * width, 2 * height, 'water');
+			// water
+			water1 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'water');
 			water1.anchor.setTo(0, 0);
-			water2 = game.add.sprite(2 * width, 2 * height, 'water');
+			water2 = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'water');
 			water2.anchor.setTo(0, 0);
 
-			//hidden egg
-			hidegg = game.add.sprite(2 * width, 2 * height, 'egg');
-			hidegg.anchor.setTo(0.5, 0);
+			// hidden egg
+			hidenegg = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'egg');
+			hidenegg.anchor.setTo(0.5, 0);
 
-			//ball
-			ball = game.add.sprite(2 * width, 2 * height, ballselection[bsel]);
+			// ball
+			ball = game.add.sprite(2 * WIDTH, 2 * HEIGHT, ballselection[bsel]);
 			ball.anchor.setTo(0.5, 1);
-			ball.width = 28 * wr;
-			ball.height = 28 * hr;
+			ball.width = 28 * WR;
+			ball.height = 28 * HR;
 			ball.visible = false;
 
-			//easter egg
-			egg = game.add.sprite(2 * width, 2 * height, 'ground');
+			// easter egg
+			egg = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'ground');
 			egg.alpha = 0.96;
 			egg.anchor.setTo(0, 0);
 
-			//arrow
-			arrow = game.add.sprite(2 * width, 2 * height, 'arrow');
+			// arrow
+			arrow = game.add.sprite(2 * WIDTH, 2 * HEIGHT, 'arrow');
 			arrow.angle = -angle;
-			arrow.height = 100 * hr;
-			arrow.width = 143 * wr * power / 100;
+			arrow.height = 100 * HR;
+			arrow.width = 143 * WR * power / 100;
 			arrow.anchor.setTo(0, 0.5);
 			arrow.x = ball.x + ball.height / 2 * Math.cos(45 * Math.PI / 180);
 			arrow.y = ball.y - ball.height / 2 - ball.height / 2 * Math.sin(45 * Math.PI / 180);
 
-			//score info text
-			disptextI = game.add.text(10 * wr, 5 * hr);
+			// score info text
+			disptextI = game.add.text(10 * WR, 5 * HR);
 			disptextI.setText('Hole: ' + hole + '\nPar: 2\nStrokes: 0');
 			disptextI.font = 'Comic Sans MS';
-			disptextI.fontSize = 40 * hr;
+			disptextI.fontSize = 40 * HR;
 			disptextI.fill = '#000000';
-			//ball qualities text
-			disptextQ = game.add.text(null, groundlevel + 5 * hr, 'Power: 75\nAngle: 45', {
+			// ball qualities text
+			disptextQ = game.add.text(null, groundLevel + 5 * HR, 'Power: 75\nAngle: 45', {
 				font: 'Comic Sans MS',
-				fontSize: 27 * hr,
+				fontSize: 27 * HR,
 				fill: '#000000'
 			});
 
@@ -253,89 +231,89 @@ function everything() {
 			disptextQ.anchor.setTo(0, 0);
 
 			// +/- buttons for angle and power and launch
-			powerplus = game.add.sprite(disptextQ.x + 138 * wr, disptextQ.y + 2 * hr, 'plusbutton');
-			powerminus = game.add.sprite(powerplus.x + powerplus.width + 9 * wr, powerplus.y, 'minusbutton');
-			angleplus = game.add.sprite(powerplus.x, powerplus.y + powerplus.height + 7 * hr, 'plusbutton');
+			powerplus = game.add.sprite(disptextQ.x + 138 * WR, disptextQ.y + 2 * HR, 'plusbutton');
+			powerminus = game.add.sprite(powerplus.x + powerplus.width + 9 * WR, powerplus.y, 'minusbutton');
+			angleplus = game.add.sprite(powerplus.x, powerplus.y + powerplus.height + 7 * HR, 'plusbutton');
 			angleminus = game.add.sprite(powerminus.x, angleplus.y, 'minusbutton');
 
-			//launch button
-			launchbutton = game.add.sprite(powerminus.x + 45 * wr, (height - groundlevel) / 2 + groundlevel, 'launchbutton');
+			// launch button
+			launchbutton = game.add.sprite(powerminus.x + 45 * WR, (HEIGHT - groundLevel) / 2 + groundLevel, 'launchbutton');
 			launchbutton.anchor.setTo(0, 0.5);
-			launchbutton.height = 805 / 10 * hr;
+			launchbutton.height = 805 / 10 * HR;
 			launchbutton.width = launchbutton.height;
 			launchbutton.inputEnabled = true;
 			launchbutton.events.onInputDown.add(launchlistener, this);
 
-			//powerupbutton
+			// powerupbutton
 			powerupbutton = game.add.sprite(null, null, 'powerup');
 			powerupbutton.anchor.setTo(0.5, 0.5);
 			powerupbutton.height = launchbutton.height;
 			powerupbutton.width = powerupbutton.height;
-			powerupbutton.x = launchbutton.x + launchbutton.width / 2 + powerupbutton.width + 7 * wr;
-			powerupbutton.y = (height - groundlevel) / 2 + groundlevel;
+			powerupbutton.x = launchbutton.x + launchbutton.width / 2 + powerupbutton.width + 7 * WR;
+			powerupbutton.y = (HEIGHT - groundLevel) / 2 + groundLevel;
 			powerupbutton.inputEnabled = true;
 			powerupbutton.events.onInputDown.add(disppulistener, this);
 
-			//activate button
+			// activate button
 			activatebutton = game.add.sprite(null, null, 'activatebutton');
 			activatebutton.anchor.setTo(0.5, 0.5);
 			activatebutton.height = launchbutton.height;
 			activatebutton.width = powerupbutton.height;
-			activatebutton.x = powerupbutton.x + launchbutton.width + 7 * wr;
-			activatebutton.y = (height - groundlevel) / 2 + groundlevel;
+			activatebutton.x = powerupbutton.x + launchbutton.width + 7 * WR;
+			activatebutton.y = (HEIGHT - groundLevel) / 2 + groundLevel;
 			activatebutton.inputEnabled = true;
 			activatebutton.events.onInputDown.add(activatepu, this);
 			activatebutton.visible = false;
 
-			//small circle to show limit
+			// small circle to show limit
 			poweruplimitbg = game.add.sprite(null, null, 'blackcircle');
 			poweruplimitbg.anchor.setTo(0.7, 0.3);
-			poweruplimitbg.height = 30 * hr;
+			poweruplimitbg.height = 30 * HR;
 			poweruplimitbg.width = poweruplimitbg.height;
-			poweruplimitbg.x = powerupbutton.x + powerupbutton.width / 2 - 3 * wr;
-			poweruplimitbg.y = powerupbutton.y - powerupbutton.height / 2 + 3 * hr;
+			poweruplimitbg.x = powerupbutton.x + powerupbutton.width / 2 - 3 * WR;
+			poweruplimitbg.y = powerupbutton.y - powerupbutton.height / 2 + 3 * HR;
 
-			//powerup text
+			// powerup text
 			poweruptext = game.add.text(null, null, '', {
 				font: 'Comic Sans MS',
-				fontSize: 50 * hr,
+				fontSize: 50 * HR,
 				fill: '#000000'
 			});
 			poweruptext.anchor.setTo(0.5, 0.5);
-			poweruptext.x = width / 2;
-			poweruptext.y = height / 13;
+			poweruptext.x = WIDTH / 2;
+			poweruptext.y = HEIGHT / 13;
 
-			//powerup limit
+			// powerup limit
 			poweruplimittext = game.add.text(null, null, '7', {
 				font: 'Comic Sans MS',
-				fontSize: 25 * hr,
+				fontSize: 25 * HR,
 				fill: '#ffffff'
 			});
 			poweruplimittext.anchor.setTo(0.5, 0.5);
 			poweruplimittext.fontWeight = 'bold'
-			poweruplimittext.x = poweruplimitbg.x - 5 * wr;
-			poweruplimittext.y = poweruplimitbg.y + 9 * hr;
+			poweruplimittext.x = poweruplimitbg.x - 5 * WR;
+			poweruplimittext.y = poweruplimitbg.y + 9 * HR;
 
-			//bg display power ups
-			powerupdispbg = game.add.sprite(null, 60 * hr, 'roundrectangle');
+			// bg display power ups
+			powerupdispbg = game.add.sprite(null, 60 * HR, 'roundrectangle');
 			powerupdispbg.anchor.setTo(0, 0.5);
-			powerupdispbg.height = 6 * 805 / 40 * hr;
-			powerupdispbg.x = width / 6;
-			powerupdispbg.width = 2 * width / 3;
+			powerupdispbg.height = 6 * 805 / 40 * HR;
+			powerupdispbg.x = WIDTH / 6;
+			powerupdispbg.width = 2 * WIDTH / 3;
 			powerupdispbg.alpha = 0.85;
 			powerupdispbg.visible = false;
 
-			//superball
+			// superball
 			superball = game.add.sprite(null, null, 'superball');
 			superball.anchor.setTo(0.5, 0.5);
-			superball.height = 100.625 * wr;
+			superball.height = 100.625 * WR;
 			superball.width = superball.height;
 			superball.y = powerupdispbg.y;
 			superball.inputEnabled = true;
 			superball.events.onInputDown.add(superballlistener, this);
 			superball.visible = false;
 
-			//bouncyball
+			// bouncyball
 			bouncyball = game.add.sprite(null, null, 'bouncyball');
 			bouncyball.anchor.setTo(0.5, 0.5);
 			bouncyball.height = superball.height;
@@ -345,7 +323,7 @@ function everything() {
 			bouncyball.events.onInputDown.add(bouncyballlistener, this);
 			bouncyball.visible = false;
 
-			//sticky ball
+			// sticky ball
 			gumball = game.add.sprite(null, null, 'gumball');
 			gumball.anchor.setTo(0.5, 0.5);
 			gumball.height = superball.height;
@@ -355,7 +333,7 @@ function everything() {
 			gumball.events.onInputDown.add(gumballlistener, this);
 			gumball.visible = false;
 
-			//ice ball
+			// ice ball
 			iceball = game.add.sprite(null, null, 'iceball');
 			iceball.anchor.setTo(0.5, 0.5);
 			iceball.height = superball.height;
@@ -365,7 +343,7 @@ function everything() {
 			iceball.events.onInputDown.add(iceballlistener, this);
 			iceball.visible = false;
 
-			//laserball
+			// laserball
 			laserball = game.add.sprite(null, null, 'laserball');
 			laserball.anchor.setTo(0.5, 0.5);
 			laserball.height = superball.height;
@@ -375,7 +353,7 @@ function everything() {
 			laserball.events.onInputDown.add(laserballlistener, this);
 			laserball.visible = false;
 
-			//reboost
+			// reboost
 			reboost = game.add.sprite(null, null, 'reboost');
 			reboost.anchor.setTo(0.5, 0.5);
 			reboost.height = superball.height;
@@ -385,7 +363,7 @@ function everything() {
 			reboost.events.onInputDown.add(reboostlistener, this);
 			reboost.visible = false;
 
-			//dropball
+			// dropball
 			dropball = game.add.sprite(null, null, 'dropball');
 			dropball.anchor.setTo(0.5, 0.5);
 			dropball.height = superball.height;
@@ -395,7 +373,7 @@ function everything() {
 			dropball.events.onInputDown.add(dropballlistener, this);
 			dropball.visible = false;
 
-			//mulligan
+			// mulligan
 			mulligan = game.add.sprite(null, null, 'mulligan');
 			mulligan.anchor.setTo(0.5, 0.5);
 			mulligan.height = superball.height;
@@ -405,7 +383,7 @@ function everything() {
 			mulligan.events.onInputDown.add(mulliganlistener, this);
 			mulligan.visible = false;
 
-			//-1
+			// -1
 			minus1 = game.add.sprite(null, null, 'minus1');
 			minus1.anchor.setTo(0.5, 0.5);
 			minus1.height = superball.height;
@@ -415,175 +393,175 @@ function everything() {
 			minus1.events.onInputDown.add(minus1listener, this);
 			minus1.visible = false;
 
-			//setting up display for powerups
+			// setting up display for powerups
 			superball.x = powerupdispbg.x + powerupdispbg.width / 2;
-			iceball.x = superball.x + 110 * wr;
-			laserball.x = superball.x - 110 * wr;
-			dropball.x = superball.x + 110 * 2 * wr;
-			bouncyball.x = superball.x - 110 * 2 * wr;
-			gumball.x = superball.x + 110 * 3 * wr;
-			reboost.x = superball.x - 110 * 3 * wr;
-			mulligan.x = superball.x + 110 * 4 * wr;
-			minus1.x = superball.x - 110 * 4 * wr;
+			iceball.x = superball.x + 110 * WR;
+			laserball.x = superball.x - 110 * WR;
+			dropball.x = superball.x + 110 * 2 * WR;
+			bouncyball.x = superball.x - 110 * 2 * WR;
+			gumball.x = superball.x + 110 * 3 * WR;
+			reboost.x = superball.x - 110 * 3 * WR;
+			mulligan.x = superball.x + 110 * 4 * WR;
+			minus1.x = superball.x - 110 * 4 * WR;
 
-			//reload page button
+			// reload page button
 			homebutton = game.add.sprite(null, null, 'homebutton');
 			homebutton.anchor.setTo(1, 0);
-			homebutton.width = 50 * wr;
-			homebutton.x = width - 70 * wr;
+			homebutton.width = 50 * WR;
+			homebutton.x = WIDTH - 70 * WR;
 			homebutton.height = homebutton.width;
 			homebutton.y = homebutton.height / 5;
 			homebutton.inputEnabled = true;
 			homebutton.events.onInputDown.add(resetlistener, this);
 
-			//previous position button (practice only)
-			redobutton = game.add.sprite(69 * wr, 44 * hr, 'redobutton');
+			// previous position button (practice only)
+			redobutton = game.add.sprite(69 * WR, 44 * HR, 'redobutton');
 			redobutton.anchor.setTo(0, 0);
-			redobutton.height = 40 * hr;
+			redobutton.height = 40 * HR;
 			redobutton.width = redobutton.height;
 			redobutton.inputEnabled = true;
 			redobutton.events.onInputDown.add(redolistener, this);
 			redobutton.visible = false;
 
-			//scorecard background
+			// scorecard background
 			scorecardbg = game.add.sprite(0, 0, 'scorecardbg');
 			scorecardbg.anchor.setTo(0, 0);
-			scorecardbg.width = width;
-			scorecardbg.height = height;
+			scorecardbg.width = WIDTH;
+			scorecardbg.height = HEIGHT;
 			scorecardbg.visible = false;
 
-			//scorecard
-			scorecard = game.add.sprite(width / 2, height / 2, 'scorecard');
+			// scorecard
+			scorecard = game.add.sprite(WIDTH / 2, HEIGHT / 2, 'scorecard');
 			scorecard.anchor.setTo(0.5, 0.5);
-			scorecard.height = 700 * hr;
-			scorecard.width = 660 * wr;
+			scorecard.height = 700 * HR;
+			scorecard.width = 660 * WR;
 			scorecard.visible = false;
 
-			//next hole button
-			button = game.add.sprite(scorecard.x + scorecard.width / 2 + 75 * wr, scorecard.y, 'nextholebutton');
+			// next hole button
+			button = game.add.sprite(scorecard.x + scorecard.width / 2 + 75 * WR, scorecard.y, 'nextholebutton');
 			button.anchor.setTo(0, 0.5);
-			button.width = 250 * wr;
-			button.height = 250 * hr;
+			button.width = 250 * WR;
+			button.height = 250 * HR;
 			button.inputEnabled = true;
 			button.visible = false;
 			button.events.onInputDown.add(listener, this);
 
-			//next hole text
-			disptextNext = game.add.text(button.x + button.width / 2, button.height / 2 + button.y + 30 * hr, 'Next Hole', {
+			// next hole text
+			disptextNext = game.add.text(button.x + button.width / 2, button.height / 2 + button.y + 30 * HR, 'Next Hole', {
 				font: 'Comic Sans MS',
-				fontSize: 60 * wr,
+				fontSize: 60 * WR,
 				fill: '#000000'
 			});
 			disptextNext.visible = false;
 			disptextNext.anchor.setTo(0.5, 0.5);
 
-			//score display
-			score1 = game.add.text(scorecard.x + 85 * wr, scorecard.y - 155 * hr, '');
-			score2 = game.add.text(score1.x, score1.y + scoregap, '');
-			score3 = game.add.text(score1.x, score1.y + 2 * scoregap, '');
-			score4 = game.add.text(score1.x, score1.y + 3 * scoregap, '');
-			score5 = game.add.text(score1.x, score1.y + 4 * scoregap, '');
-			score6 = game.add.text(score1.x, score1.y + 5 * scoregap, '');
-			score7 = game.add.text(score1.x, score1.y + 6 * scoregap, '');
-			score8 = game.add.text(score1.x, score1.y + 7 * scoregap, '');
-			score9 = game.add.text(score1.x, score1.y + 8 * scoregap, '');
-			score10 = game.add.text(score1.x, score1.y + 9 * scoregap, '');
+			// score display
+			score1 = game.add.text(scorecard.x + 85 * WR, scorecard.y - 155 * HR, '');
+			score2 = game.add.text(score1.x, score1.y + SCORE_GAP, '');
+			score3 = game.add.text(score1.x, score1.y + 2 * SCORE_GAP, '');
+			score4 = game.add.text(score1.x, score1.y + 3 * SCORE_GAP, '');
+			score5 = game.add.text(score1.x, score1.y + 4 * SCORE_GAP, '');
+			score6 = game.add.text(score1.x, score1.y + 5 * SCORE_GAP, '');
+			score7 = game.add.text(score1.x, score1.y + 6 * SCORE_GAP, '');
+			score8 = game.add.text(score1.x, score1.y + 7 * SCORE_GAP, '');
+			score9 = game.add.text(score1.x, score1.y + 8 * SCORE_GAP, '');
+			score10 = game.add.text(score1.x, score1.y + 9 * SCORE_GAP, '');
 
-			//all in an array for for loops
-			allscores = [score1, score2, score3, score4, score5, score6, score7, score8, score9, score10]
-			for (var i = 0; i < allscores.length; i++) {
-				allscores[i].anchor.setTo(0.5, 0)
-				allscores[i].font = 'Calibri',
-					allscores[i].fontSize = 50 * hr,
-					allscores[i].fontWeight = 'normal',
-					allscores[i].fill = '#000000'
+			// all in an array for for loops
+			allScores = [score1, score2, score3, score4, score5, score6, score7, score8, score9, score10]
+			for (var i = 0; i < allScores.length; i++) {
+				allScores[i].anchor.setTo(0.5, 0)
+				allScores[i].font = 'Calibri',
+					allScores[i].fontSize = 50 * HR,
+					allScores[i].fontWeight = 'normal',
+					allScores[i].fill = '#000000'
 			}
 
 			// +/- par text
-			parScore = game.add.text(scorecard.x + 143 * wr, null, '', {
+			parScore = game.add.text(scorecard.x + 143 * WR, null, '', {
 				font: 'Calibri'
 			});
 			parScore.anchor.setTo(1, 0);
 
-			//main menu screen
+			// main menu screen
 			cover = game.add.sprite(0, 0, 'mainmenu');
 			cover.anchor.setTo(0, 0);
-			cover.width = width;
-			cover.height = height;
+			cover.width = WIDTH;
+			cover.height = HEIGHT;
 
-			//information button
+			// information button
 			information = game.add.sprite(null, null, 'information');
 			information.anchor.setTo(1, 0);
 			information.width = homebutton.height;
 			information.height = homebutton.height;
-			information.x = width - 6 * wr;
+			information.x = WIDTH - 6 * WR;
 			information.y = homebutton.y;
 			information.inputEnabled = true;
 			information.events.onInputDown.add(infolistener, this);
 
-			//start button
-			startbutton = game.add.sprite(width / 2, height / 2, 'startbutton');
+			// start button
+			startbutton = game.add.sprite(WIDTH / 2, HEIGHT / 2, 'startbutton');
 			startbutton.anchor.setTo(0.5, 0.5);
-			startbutton.width = 425 * wr;
-			startbutton.height = 425 * hr;
+			startbutton.width = 425 * WR;
+			startbutton.height = 425 * HR;
 			startbutton.inputEnabled = true;
 			startbutton.events.onInputDown.add(mainlistener, this);
 
-			//practice button
-			practicebutton = game.add.sprite(width / 4, height / 2, 'practicebutton');
+			// practice button
+			practicebutton = game.add.sprite(WIDTH / 4, HEIGHT / 2, 'practicebutton');
 			practicebutton.anchor.setTo(0.5, 0.5);
-			practicebutton.width = 250 * wr;
-			practicebutton.height = 250 * hr;
+			practicebutton.width = 250 * WR;
+			practicebutton.height = 250 * HR;
 			practicebutton.inputEnabled = true;
 			practicebutton.events.onInputDown.add(practicelistener, this);
 
-			//customize button
-			customize = game.add.sprite(3 * width / 4, height / 2, 'customize');
+			// customize button
+			customize = game.add.sprite(3 * WIDTH / 4, HEIGHT / 2, 'customize');
 			customize.anchor.setTo(0.5, 0.5);
-			customize.width = 250 * wr;
-			customize.height = 250 * hr;
+			customize.width = 250 * WR;
+			customize.height = 250 * HR;
 			customize.inputEnabled = true;
 			customize.events.onInputDown.add(customizelistener, this);
 
-			//play again / reload page button
-			playagain = game.add.sprite(scorecard.x + scorecard.width - 85 * wr, scorecard.y, 'playagain');
+			// play again / reload page button
+			playagain = game.add.sprite(scorecard.x + scorecard.width - 85 * WR, scorecard.y, 'playagain');
 			playagain.anchor.setTo(0.5, 0.5);
 			playagain.visible = false;
-			playagain.width = 400 * wr;
-			playagain.height = 300 * hr;
+			playagain.width = 400 * WR;
+			playagain.height = 300 * HR;
 			playagain.inputEnabled = true;
 			playagain.events.onInputDown.add(resetlistener, this);
 
-			//info page
+			// info page
 			ipage = game.add.sprite(0, 0, 'ipage');
 			ipage.anchor.setTo(0, 0);
-			ipage.width = width;
-			ipage.height = height;
+			ipage.width = WIDTH;
+			ipage.height = HEIGHT;
 			ipage.visible = false;
 
-			//player
-			character = game.add.sprite(2 * width, 2 * height, characterselection[charsel]);
+			// player
+			character = game.add.sprite(2 * WIDTH, 2 * HEIGHT, characterselection[charsel]);
 			character.anchor.setTo(0.5, 0.5);
-			flipcharacter = game.add.sprite(2 * width, 2 * height, flipcharacterselection[charsel]);
+			flipcharacter = game.add.sprite(2 * WIDTH, 2 * HEIGHT, flipcharacterselection[charsel]);
 			flipcharacter.anchor.setTo(0.5, 0.5);
 			character.visible = false;
 			flipcharacter.visible = false;
-			character.width = 100 * wr;
-			character.height = 171 * hr;
-			flipcharacter.width = 100 * wr;
-			flipcharacter.height = 171 * hr;
+			character.width = 100 * WR;
+			character.height = 171 * HR;
+			flipcharacter.width = 100 * WR;
+			flipcharacter.height = 171 * HR;
 
-			//all customizations
+			// all customizations
 			customizations();
 
-			//physics
+			// physics
 			game.physics.startSystem(Phaser.Physics.ARCADE);
 			game.physics.enable(ball, Phaser.Physics.ARCADE);
 
-			//gravity
-			game.physics.arcade.gravity.y = 400 * hr;
+			// gravity
+			game.physics.arcade.gravity.y = 400 * HR;
 
-			//setting qualities for all platforms
+			// setting qualities for all platforms
 			plat = [floor1, floor2, floor3, ground1, ground2, ground3, ground4, ground5];
 			for (var i = 0; i < plat.length; i++) {
 				game.physics.enable(plat[i], Phaser.Physics.ARCADE);
@@ -593,7 +571,7 @@ function everything() {
 				plat[i].body.collideWorldBounds = true;
 			}
 
-			//setting qualities for ball
+			// setting qualities for ball
 			ball.body.allowGravity = true;
 			ball.body.immovable = false;
 			ball.body.moves = true;
@@ -601,7 +579,7 @@ function everything() {
 			ball.body.bounce = true;
 			ball.body.bounce = new Phaser.Point(0.4, 0.4);
 
-			//input keys
+			// input keys
 			SpaceBar = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
 			W = game.input.keyboard.addKey(Phaser.Keyboard.W);
 			S = game.input.keyboard.addKey(Phaser.Keyboard.S);
@@ -610,104 +588,104 @@ function everything() {
 			E = game.input.keyboard.addKey(Phaser.Keyboard.E);
 			Q = game.input.keyboard.addKey(Phaser.Keyboard.Q);
 
-			//running hole
+			// running hole
 			gameplay();
 
-			//starting position of ball
-			positionx.push(ball.x);
-			positiony.push(ball.y);
+			// starting position of ball
+			positionX.push(ball.x);
+			positionY.push(ball.y);
 		},
 
 		update: function () {
-			//collision between ball and platforms
+			// collision between ball and platforms
 			for (var i = 0; i < plat.length; i++) {
 				game.physics.arcade.collide(plat[i], ball);
 			}
 
-			//launch values
-			truepower = 6 * power;
-			radianvalue = angle * Math.PI / 180;
-			vY = -truepower * Math.sin(radianvalue);
-			vX = truepower * Math.cos(radianvalue);
+			// launch values
+			truePower = 6 * power;
+			radianValue = angle * Math.PI / 180;
+			vY = -truePower * Math.sin(radianValue);
+			vX = truePower * Math.cos(radianValue);
 
-			//input
-			const mouse = game.input.activePointer;
+			// input
+			const MOUSE = game.input.activePointer;
 
-			//mobile buttons
+			// mobile buttons
 			if (isMobile &&
-				mouse.isDown &&
-				mouse.x <= angleplus.x + angleplus.width / 2 &&
-				mouse.x >= angleplus.x - angleplus.width / 2 &&
-				mouse.y >= angleplus.y - angleplus.height / 2 &&
-				mouse.y <= angleplus.y + angleplus.height / 2 &&
+				MOUSE.isDown &&
+				MOUSE.x <= angleplus.x + angleplus.width / 2 &&
+				MOUSE.x >= angleplus.x - angleplus.width / 2 &&
+				MOUSE.y >= angleplus.y - angleplus.height / 2 &&
+				MOUSE.y <= angleplus.y + angleplus.height / 2 &&
 				ball.body.velocity.x == 0) {
 				angleup();
 			}
 			if (isMobile &&
-				mouse.isDown &&
-				mouse.x <= angleminus.x + angleminus.width / 2 &&
-				mouse.x >= angleminus.x - angleminus.width / 2 &&
-				mouse.y >= angleminus.y - angleminus.height / 2 &&
-				mouse.y <= angleminus.y + angleminus.height / 2 &&
+				MOUSE.isDown &&
+				MOUSE.x <= angleminus.x + angleminus.width / 2 &&
+				MOUSE.x >= angleminus.x - angleminus.width / 2 &&
+				MOUSE.y >= angleminus.y - angleminus.height / 2 &&
+				MOUSE.y <= angleminus.y + angleminus.height / 2 &&
 				ball.body.velocity.x == 0) {
 				angledown();
 			}
 			if (isMobile &&
-				mouse.isDown &&
-				mouse.x <= powerplus.x + powerplus.width / 2 &&
-				mouse.x >= powerplus.x - powerplus.width / 2 &&
-				mouse.y >= powerplus.y - powerplus.height / 2 &&
-				mouse.y <= powerplus.y + powerplus.height / 2 &&
+				MOUSE.isDown &&
+				MOUSE.x <= powerplus.x + powerplus.width / 2 &&
+				MOUSE.x >= powerplus.x - powerplus.width / 2 &&
+				MOUSE.y >= powerplus.y - powerplus.height / 2 &&
+				MOUSE.y <= powerplus.y + powerplus.height / 2 &&
 				ball.body.velocity.x == 0) {
 				powerup();
 			}
 			if (isMobile &&
-				mouse.isDown &&
-				mouse.x <= powerminus.x + powerminus.width / 2 &&
-				mouse.x >= powerminus.x - powerminus.width / 2 &&
-				mouse.y >= powerminus.y - powerminus.height / 2 &&
-				mouse.y <= powerminus.y + powerminus.height / 2 &&
+				MOUSE.isDown &&
+				MOUSE.x <= powerminus.x + powerminus.width / 2 &&
+				MOUSE.x >= powerminus.x - powerminus.width / 2 &&
+				MOUSE.y >= powerminus.y - powerminus.height / 2 &&
+				MOUSE.y <= powerminus.y + powerminus.height / 2 &&
 				ball.body.velocity.x == 0) {
 				powerdown();
 			}
 
-			//computer buttons
+			// computer buttons
 			if (
-				(A.isDown || (mouse.isDown &&
-					mouse.x >= angleplus.x &&
-					mouse.x <= angleplus.x + angleplus.width &&
-					mouse.y >= angleplus.y &&
-					mouse.y <= angleplus.y + angleplus.height)) &&
+				(A.isDown || (MOUSE.isDown &&
+					MOUSE.x >= angleplus.x &&
+					MOUSE.x <= angleplus.x + angleplus.width &&
+					MOUSE.y >= angleplus.y &&
+					MOUSE.y <= angleplus.y + angleplus.height)) &&
 				ball.body.velocity.x == 0 && isMobile == false
 			) {
 				angleup();
 			}
 			if (
-				(D.isDown || (mouse.isDown &&
-					mouse.x >= angleminus.x &&
-					mouse.x <= angleminus.x + angleminus.width &&
-					mouse.y >= angleminus.y &&
-					mouse.y <= angleminus.y + angleminus.height)) &&
+				(D.isDown || (MOUSE.isDown &&
+					MOUSE.x >= angleminus.x &&
+					MOUSE.x <= angleminus.x + angleminus.width &&
+					MOUSE.y >= angleminus.y &&
+					MOUSE.y <= angleminus.y + angleminus.height)) &&
 				ball.body.velocity.x == 0 && isMobile == false
 			) {
 				angledown();
 			}
 			if (
-				(W.isDown || (mouse.isDown &&
-					mouse.x >= powerplus.x &&
-					mouse.x <= powerplus.x + powerplus.width &&
-					mouse.y >= powerplus.y &&
-					mouse.y <= powerplus.y + powerplus.height)) &&
+				(W.isDown || (MOUSE.isDown &&
+					MOUSE.x >= powerplus.x &&
+					MOUSE.x <= powerplus.x + powerplus.width &&
+					MOUSE.y >= powerplus.y &&
+					MOUSE.y <= powerplus.y + powerplus.height)) &&
 				ball.body.velocity.x == 0 && isMobile == false
 			) {
 				powerup();
 			}
 			if (
-				(S.isDown || (mouse.isDown &&
-					mouse.x >= powerminus.x &&
-					mouse.x <= powerminus.x + powerminus.width &&
-					mouse.y >= powerminus.y &&
-					mouse.y <= powerminus.y + powerminus.height)) &&
+				(S.isDown || (MOUSE.isDown &&
+					MOUSE.x >= powerminus.x &&
+					MOUSE.x <= powerminus.x + powerminus.width &&
+					MOUSE.y >= powerminus.y &&
+					MOUSE.y <= powerminus.y + powerminus.height)) &&
 				ball.body.velocity.x == 0 && isMobile == false
 			) {
 				powerdown();
@@ -717,7 +695,7 @@ function everything() {
 				launch();
 			}
 
-			//flipping character
+			// flipping character
 			if (angle > 90 && ball.visible == true) {
 				character.visible = false;
 				flipcharacter.visible = true;
@@ -727,48 +705,38 @@ function everything() {
 				flipcharacter.visible = false;
 			}
 
-			//makes ball stop, found value by logging velocity
-			//console.log(ball.body.velocity.y);
-			//normal
-			if (ball.body.velocity.y == -1.9047619047619049 * mobilemult) {
+			// makes ball stop, found value by logging velocity
+			if (Math.abs(ball.body.velocity.y + 1.9047619047619049 * mobileMult) < Math.pow(10, -10) || // normal
+				Math.abs(ball.body.velocity.y + 2.962962962962963 * mobileMult) < Math.pow(10, -10) || // bouncy ball
+				Math.abs(ball.body.velocity.y + 2.5925925925925926 * mobileMult) < Math.pow(10, -10) || // super ball
+				Math.abs(ball.body.velocity.y + 1.78888888888) < 0.05) // laser ball
 				stop();
-			} else if (ball.body.velocity.y == -2.962962962962963 * mobilemult) {
-				//bouncy ball
-				stop();
-			} else if (ball.body.velocity.y == -2.5925925925925926 * mobilemult) {
-				//superball
-				stop();
-			} else if (ball.body.velocity.y == -1.6666666666666665 * mobilemult) {
-				//laserball
-				stop();
-			}
 
-			//arrow direction
+			// arrow direction
 			arrow.angle = -angle;
 			arrow.height = character.width;
-			arrow.width = (character.height - 30 * hr) * power / 100;
+			arrow.width = (character.height - 30 * HR) * power / 100;
 			arrow.x = ball.x + ball.height / 2 * Math.cos(angle * Math.PI / 180);
 			arrow.y = ball.y - ball.height / 2 - ball.height / 2 * Math.sin(angle * Math.PI / 180);
 
-
-			//show powerups
+			// show powerups
 			if (E.isDown && game.time.totalElapsedSeconds() > 0.35) {
 				game.time.reset();
 				disppulistener();
 			}
-			//to activate * powerup's
-			if ((dropballbol == 2 || (reboostbol == 2 || reboostbol == 1)) && Q.isDown) {
+			// to activate * powerup's
+			if ((dropBool == 2 || (reboostBool == 2 || reboostBool == 1)) && Q.isDown) {
 				activatepu();
 			}
 
-			//par
+			// par
 			if (hole == 1) {
-				par = totalpar[0];
+				par = TOTAL_PAR[0];
 			} else {
-				par = totalpar[hole - 1] - totalpar[hole - 2];
+				par = TOTAL_PAR[hole - 1] - TOTAL_PAR[hole - 2];
 			}
 
-			//displays scorecard screen
+			// displays scorecard screen
 			function showscorecard() {
 				ball.visible = false;
 				character.visible = false;
@@ -785,15 +753,15 @@ function everything() {
 					disptextNext.visible = false;
 					playagain.visible = true;
 				}
-				for (var i = 0; i < allscores.length; i++) {
-					allscores[i].visible = true;
+				for (var i = 0; i < allScores.length; i++) {
+					allScores[i].visible = true;
 				}
 				parScore.visible = true;
 			}
 
-			//checks for ball collision with bottom of hole
+			// checks for ball collision with bottom of hole
 			if (ball.x >= cup.x && ball.x <= cup.x + cup.width && ball.y == floor3.y) {
-				strokesdisp.push(strokes);
+				strokesDisp.push(strokes);
 				if (prac == false) {
 					showscorecard();
 					newhole();
@@ -802,158 +770,152 @@ function everything() {
 				stop();
 			}
 
-			//power max and min
-			if (laserbol == false) {
+			// power max and min
+			if (laserBool == false) {
 				power = Math.min(100, Math.max(1, power));
 			} else {
 				power = Math.min(100, Math.max(100, power));
 			}
 
-			//collision with all sides and edge of screen
+			// collision with all sides and edge of screen
 			for (var i = 0; i < plat.length; i++) {
-				//top
+				// top
 				if (ball.x >= plat[i].x && ball.x <= plat[i].x + plat[i].width && ball.y == plat[i].y) {
-					//gumball must be enabled for ball to stick
-					if (gumbol == true) {
+					// gumball must be enabled for ball to stick
+					if (gumBool == true) {
 						stop();
 						ball.body.moves = false;
-						ball.y = ball.y - 1 * hr;
+						ball.y = ball.y - 1 * HR;
 					}
 					angle = Math.min(180, Math.max(0, angle));
 					updateTextQ();
 				}
 
-				//left
-				if (
-					ball.x >= width - ball.width / 2 ||
+				// left
+				if (ball.x >= WIDTH - ball.width / 2 ||
 					(ball.x == plat[i].x - ball.width / 2 &&
 						ball.y >= plat[i].y - ball.height / 2 &&
-						ball.y <= plat[i].y + plat[i].height + ball.height / 2)
-				) {
-					if (gumbol == true) {
+						ball.y <= plat[i].y + plat[i].height + ball.height / 2)) {
+
+					if (gumBool == true) {
 						stop();
 						ball.body.moves = false;
-						ball.x = ball.x - 1 * wr;
+						ball.x = ball.x - 1 * WR;
 						updateTextQ();
 					}
-					//ball falls
-					if (laserbol == true) {
-						//sets it to false and everything back to normal
-						laserbol = false;
+					else if (laserBool == true) { // ball falls
+						// sets it to false and everything back to normal
+						laserBool = false;
 						ball.body.bounce = new Phaser.Point(0.4, 0.4);
-						game.physics.arcade.gravity.y = 350 * hr;
-						ball.body.velocity.setTo(0.001, 30 * hr);
+						game.physics.arcade.gravity.y = 350 * HR;
+						ball.body.velocity.setTo(0.001, 30 * HR);
 					}
 				}
-				//right
-				if (
-					ball.x <= ball.width / 2 ||
+				// right
+				if (ball.x <= ball.width / 2 ||
 					(ball.x == plat[i].x + plat[i].width + ball.width / 2 &&
 						ball.y >= plat[i].y - ball.height / 2 &&
 						ball.y <= plat[i].y + plat[i].height + ball.height / 2)
 				) {
-					if (gumbol == true) {
+					if (gumBool == true) {
 						stop();
 						ball.body.moves = false;
-						ball.x = ball.x + 2 * wr;
+						ball.x = ball.x + 2 * WR;
 					}
-
-					if (laserbol == true) {
-						laserbol = false;
+					else if (laserBool == true) {
+						laserBool = false;
 						ball.body.bounce = new Phaser.Point(0.4, 0.4);
-						game.physics.arcade.gravity.y = 350 * hr;
-						ball.body.velocity.setTo(0.001, 30 * hr);
+						game.physics.arcade.gravity.y = 350 * HR;
+						ball.body.velocity.setTo(0.001, 30 * HR);
 					}
 				}
-				//bottom
-				if (
-					ball.y <= ball.height ||
+				// bottom
+				if (ball.y <= ball.height ||
 					(ball.y == plat[i].y + plat[i].height + ball.height &&
 						ball.x >= plat[i].x &&
 						ball.x <= plat[i].x + plat[i].width)
 				) {
-					if (gumbol == true) {
+					if (gumBool == true) {
 						stop();
 						ball.body.moves = false;
-						ball.y = ball.y + 2 * hr;
+						ball.y = ball.y + 2 * HR;
 					}
-
-					if (laserbol == true) {
-						laserbol = false;
+					else if (laserBool == true) {
+						laserBool = false;
 						ball.body.bounce = new Phaser.Point(0.4, 0.4);
-						game.physics.arcade.gravity.y = 350 * hr;
-						ball.body.velocity.setTo(0.001, 30 * hr);
+						game.physics.arcade.gravity.y = 350 * HR;
+						ball.body.velocity.setTo(0.001, 30 * HR);
 					}
 				}
 
-				//new min and max angles when ball sticks
-				//top
-				if (ball.y == plat[i].y - 1 * hr && ball.body.velocity.y == 0 && ball.body.velocity.x == 0) {
+				// new min and max angles when ball sticks
+				// top
+				if (ball.y == plat[i].y - 1 * HR && ball.body.velocity.y == 0 && ball.body.velocity.x == 0) {
 					angle = Math.min(180, Math.max(0, angle));
 				} else if (
-					(ball.y == ball.height + 2 * hr || ball.y == plat[i].y + plat[i].height + ball.height + 2 * hr) &&
+					(ball.y == ball.height + 2 * HR || ball.y == plat[i].y + plat[i].height + ball.height + 2 * HR) &&
 					ball.body.velocity.y == 0 &&
 					ball.body.velocity.x == 0
 				) {
-					//bottom
+					// bottom
 					angle = Math.min(360, Math.max(180, angle));
 				} else if (
-					ball.x == width - (Math.round(ball.width / 2) + 1 * wr) ||
-					(ball.x == plat[i].x - (Math.round(ball.width / 2) + 1 * wr) &&
+					ball.x == WIDTH - (Math.round(ball.width / 2) + 1 * WR) ||
+					(ball.x == plat[i].x - (Math.round(ball.width / 2) + 1 * WR) &&
 						ball.body.velocity.y == 0 &&
 						ball.body.velocity.x == 0)
 				) {
-					//left
+					// left
 					angle = Math.min(270, Math.max(90, angle));
 				} else if (
-					Math.round(ball.x) == Math.round(ball.width / 2) + 2 * wr ||
-					(ball.x == plat[i].x + plat[i].width + (Math.round(ball.width / 2) + 2 * wr) &&
+					Math.round(ball.x) == Math.round(ball.width / 2) + 2 * WR ||
+					(ball.x == plat[i].x + plat[i].width + (Math.round(ball.width / 2) + 2 * WR) &&
 						ball.body.velocity.y == 0 &&
 						ball.body.velocity.x == 0)
 				) {
-					//right
+					// right
 					angle = Math.min(180, Math.max(-90, angle));
 				}
 			}
 
-			//checks for ball collision with water hazard
-			const water = [water1, water2];
-			for (var i = 0; i < water.length; i++) {
-				if (ball.x >= water[i].x && ball.x <= water[i].x + water[i].width && ball.y == water[i].y) {
-					//powerup must be disabled
-					if (icebol != 1) {
+			// checks for ball collision with water hazard
+			const WATER = [water1, water2];
+			for (var i = 0; i < WATER.length; i++) {
+				if (ball.x >= WATER[i].x && ball.x <= WATER[i].x + WATER[i].width && ball.y == WATER[i].y) {
+					// powerup must be disabled
+					if (iceBool != 1) {
 						ball.body.moves = true;
 						ball.body.velocity.setTo(0.001, 0);
-						ball.y = ball.y + 10 * hr;
-						game.physics.arcade.gravity.y = 50 * hr;
+						ball.y = ball.y + 10 * HR;
+						game.physics.arcade.gravity.y = 50 * HR;
 					}
 				}
 
-				//checks for collision with bottom of hazard
+				// checks for collision with bottom of hazard
 				if (
-					ball.x >= water[i].x &&
-					ball.x <= water[i].x + water[i].width &&
-					ball.y >= water[i].y + water[i].height
+					ball.x >= WATER[i].x &&
+					ball.x <= WATER[i].x + WATER[i].width &&
+					ball.y >= WATER[i].y + WATER[i].height
 				) {
 					redolistener();
-					inwater = true;
+					inWater = true;
 					strokes++;
 					updateTextI();
 					stop();
 				}
 			}
 
-			//checks for ball collision with sandtraps
-			const sands = [sand1, sand2]
-			for (var i = 0; i < sands.length; i++) {
-				if (ball.x >= sands[i].x && ball.x <= sands[i].x + sands[i].width && ball.y == sands[i].y) {
+			// checks for ball collision with sandtraps
+			const SAND = [sand1, sand2]
+			for (var i = 0; i < SAND.length; i++) {
+				if (ball.x >= SAND[i].x && ball.x <= SAND[i].x + SAND[i].width && ball.y == SAND[i].y) {
 					stop();
-					ball.y = sands[i].y;
+					ball.y = SAND[i].y;
 					ball.body.moves = false;
 				}
 			}
 
-			//checks for collision with easteregg
+			// checks for collision with easteregg
 			if (ball.x >= egg.x && ball.x <= egg.x + egg.width && ball.y <= egg.y + egg.height && ball.y >= egg.y) {
 				egg.visible = false;
 				strokes = 0;
@@ -962,16 +924,16 @@ function everything() {
 				egg.visible = true;
 			}
 
-			//checks if ball is on green and sets angle to 0 or 180
+			// checks if ball is on green and sets angle to 0 or 180
 			if (
-				ball.y == groundlevel &&
+				ball.y == groundLevel &&
 				ball.x >= green.x - green.width / 2 &&
 				ball.x <= green.x + green.width / 2 &&
 				ball.body.velocity.y == 0 &&
-				ball.y == groundlevel
+				ball.y == groundLevel
 			) {
 				ball.body.moves = false;
-				ball.y = ball.y - 1 * hr;
+				ball.y = ball.y - 1 * HR;
 				if (ball.x > flag.x) {
 					angle = 180;
 				} else if (ball.x < flag.x) {
@@ -980,97 +942,97 @@ function everything() {
 				updateTextQ();
 			}
 
-			//checks for bug when ball goes below ground
-			if (ball.y > groundlevel + 3 * cup.height / 2) {
+			// checks for bug when ball goes below ground
+			if (ball.y > groundLevel + 3 * cup.height / 2) {
 				redolistener();
 				arrow.visible = true;
 			}
 
-			//if in practice mode
+			// if in practice mode
 			if (prac == true) {
-				//powerup display changes
-				powerupdispbg.x = width / 4;
-				powerupdispbg.width = 6 * width / 9;
+				// powerup display changes
+				powerupdispbg.x = WIDTH / 4;
+				powerupdispbg.width = 6 * WIDTH / 9;
 
 				poweruptext.x = powerupdispbg.x + powerupdispbg.width / 2;
-				//reset all button positions
+				// reset all button positions
 				superball.x = powerupdispbg.x + powerupdispbg.width / 2;
-				iceball.x = superball.x + 125 * wr;
-				laserball.x = superball.x - 125 * wr;
-				dropball.x = superball.x + 250 * wr;
-				reboost.x = superball.x - 250 * wr;
-				gumball.x = superball.x + 375 * wr;
-				bouncyball.x = superball.x - 375 * wr;
+				iceball.x = superball.x + 125 * WR;
+				laserball.x = superball.x - 125 * WR;
+				dropball.x = superball.x + 250 * WR;
+				reboost.x = superball.x - 250 * WR;
+				gumball.x = superball.x + 375 * WR;
+				bouncyball.x = superball.x - 375 * WR;
 			} else {
-				powerupdispbg.x = width / 6;
-				powerupdispbg.width = 2 * width / 3;
+				powerupdispbg.x = WIDTH / 6;
+				powerupdispbg.width = 2 * WIDTH / 3;
 			}
 
-			//if mobile
+			// if mobile
 			if (isMobile) {
-				//ball a little smaller
-				ball.width = 25 * wr;
-				ball.height = 25 * hr;
+				// ball a little smaller
+				ball.width = 25 * WR;
+				ball.height = 25 * HR;
 				disptextQ.fontWeight = 'bold'
-				disptextQ.lineSpacing = -3 * hr;
-				disptextQ.x = width / 2 - 68 * wr;
-				disptextQ.y = (height - groundlevel) / 2 + groundlevel - disptextQ.height / 2;
-				disptextQ.fontSize = 37 * wr
+				disptextQ.lineSpacing = -3 * HR;
+				disptextQ.x = WIDTH / 2 - 68 * WR;
+				disptextQ.y = (HEIGHT - groundLevel) / 2 + groundLevel - disptextQ.height / 2;
+				disptextQ.fontSize = 37 * WR
 
-				//bigger buttons
+				// bigger buttons
 				powerplus.anchor.setTo(0.5, 0.5);
 				powerminus.anchor.setTo(0.5, 0.5);
 				angleplus.anchor.setTo(0.5, 0.5);
 				angleminus.anchor.setTo(0.5, 0.5);
 
-				powerminus.x = disptextQ.x - 72 * wr
-				powerminus.y = (height - groundlevel) / 2 + groundlevel;
-				powerminus.width = 110 * wr;
-				powerminus.height = 110 * wr;
+				powerminus.x = disptextQ.x - 72 * WR
+				powerminus.y = (HEIGHT - groundLevel) / 2 + groundLevel;
+				powerminus.width = 110 * WR;
+				powerminus.height = 110 * WR;
 
-				powerplus.x = powerminus.x - 119 * wr
+				powerplus.x = powerminus.x - 119 * WR
 				powerplus.y = powerminus.y
 				powerplus.width = powerminus.height
 				powerplus.height = powerminus.width
 
-				angleplus.x = disptextQ.x + 232 * wr
+				angleplus.x = disptextQ.x + 232 * WR
 				angleplus.y = powerminus.y
 				angleplus.width = powerminus.width
 				angleplus.height = powerminus.height
 
-				angleminus.x = angleplus.x + 116 * wr
+				angleminus.x = angleplus.x + 116 * WR
 				angleminus.y = powerplus.y
 				angleminus.width = powerplus.width
 				angleminus.height = powerplus.height
 
-				launchbutton.x = width / 4 - 54 * wr;
-				launchbutton.height = 120 * wr;
+				launchbutton.x = WIDTH / 4 - 54 * WR;
+				launchbutton.height = 120 * WR;
 				launchbutton.width = launchbutton.height;
 
-				powerupbutton.x = 3 * width / 4 + 14 * wr;
+				powerupbutton.x = 3 * WIDTH / 4 + 14 * WR;
 				powerupbutton.width = launchbutton.height;
 				powerupbutton.height = launchbutton.height;
 
-				activatebutton.x = powerupbutton.x + 121 * wr
+				activatebutton.x = powerupbutton.x + 121 * WR
 				activatebutton.height = angleplus.height;
 				activatebutton.width = angleplus.height;
-				poweruplimitbg.height = 40 * hr;
-				poweruplimitbg.width = 40 * hr;
-				poweruplimitbg.x = powerupbutton.x + powerupbutton.width / 2 - 10 * wr;
-				poweruplimitbg.y = powerupbutton.y - powerupbutton.height / 2 + 10 * hr;
-				poweruplimittext.x = poweruplimitbg.x - 7 * wr;
-				poweruplimittext.y = poweruplimitbg.y + 11 * hr;
-				poweruplimittext.fontSize = 31 * hr;
+				poweruplimitbg.height = 40 * HR;
+				poweruplimitbg.width = 40 * HR;
+				poweruplimitbg.x = powerupbutton.x + powerupbutton.width / 2 - 10 * WR;
+				poweruplimitbg.y = powerupbutton.y - powerupbutton.height / 2 + 10 * HR;
+				poweruplimittext.x = poweruplimitbg.x - 7 * WR;
+				poweruplimittext.y = poweruplimitbg.y + 11 * HR;
+				poweruplimittext.fontSize = 31 * HR;
 			} else {
-				//buttons to computer settings
-				disptextQ.x = 10 * wr;
+				// buttons to computer settings
+				disptextQ.x = 10 * WR;
 				powerplus.anchor.setTo(0, 0);
 				powerminus.anchor.setTo(0, 0);
 				angleplus.anchor.setTo(0, 0);
 				angleminus.anchor.setTo(0, 0);
 
-				powerplus.width = 35 * wr;
-				powerplus.height = 35 * hr;
+				powerplus.width = 35 * WR;
+				powerplus.height = 35 * HR;
 				powerminus.width = powerplus.width;
 				powerminus.height = powerplus.height;
 				angleplus.width = powerplus.width;
@@ -1078,48 +1040,48 @@ function everything() {
 				angleminus.width = powerplus.width;
 				angleminus.height = powerplus.height;
 
-				powerplus.x = disptextQ.x + width / 12 + 13 * wr
-				powerplus.y = disptextQ.y + 2 * hr
-				powerminus.x = powerplus.x + powerplus.width + 9 * wr
+				powerplus.x = disptextQ.x + WIDTH / 12 + 13 * WR
+				powerplus.y = disptextQ.y + 2 * HR
+				powerminus.x = powerplus.x + powerplus.width + 9 * WR
 				powerminus.y = powerplus.y
 				angleplus.x = powerplus.x
-				angleplus.y = powerplus.y + powerplus.height + 7 * hr
+				angleplus.y = powerplus.y + powerplus.height + 7 * HR
 				angleminus.x = powerminus.x
 				angleminus.y = angleplus.y
 
-				launchbutton.x = powerminus.x + 45 * wr;
-				powerupbutton.x = launchbutton.x + launchbutton.width / 2 + powerupbutton.width + 7 * wr;
-				activatebutton.x = powerupbutton.x + launchbutton.width + 7 * wr;
-				poweruplimitbg.height = 30 * hr;
-				poweruplimitbg.width = 30 * hr;
-				poweruplimitbg.x = powerupbutton.x + powerupbutton.width / 2 - 3 * wr;
-				poweruplimitbg.y = powerupbutton.y - powerupbutton.height / 2 + 3 * hr;
-				poweruplimittext.x = poweruplimitbg.x - 5 * wr;
-				poweruplimittext.y = poweruplimitbg.y + 9 * hr;
-				poweruplimittext.fontSize = 25 * hr;
+				launchbutton.x = powerminus.x + 45 * WR;
+				powerupbutton.x = launchbutton.x + launchbutton.width / 2 + powerupbutton.width + 7 * WR;
+				activatebutton.x = powerupbutton.x + launchbutton.width + 7 * WR;
+				poweruplimitbg.height = 30 * HR;
+				poweruplimitbg.width = 30 * HR;
+				poweruplimitbg.x = powerupbutton.x + powerupbutton.width / 2 - 3 * WR;
+				poweruplimitbg.y = powerupbutton.y - powerupbutton.height / 2 + 3 * HR;
+				poweruplimittext.x = poweruplimitbg.x - 5 * WR;
+				poweruplimittext.y = poweruplimitbg.y + 9 * HR;
+				poweruplimittext.fontSize = 25 * HR;
 			}
 
-			//starts the next hole
+			// starts the next hole
 			function newhole() {
-				if (hole == 0) {
+				if (hole == 0)
 					hole1();
-				} else if (hole == 1) {
+				else if (hole == 1)
 					hole2();
-				} else if (hole == 2) {
+				else if (hole == 2)
 					hole3();
-				} else if (hole == 3) {
+				else if (hole == 3)
 					hole4();
-				} else if (hole == 4) {
+				else if (hole == 4)
 					hole5();
-				} else if (hole == 5) {
+				else if (hole == 5)
 					hole6();
-				} else if (hole == 6) {
+				else if (hole == 6)
 					hole7();
-				} else if (hole == 7) {
+				else if (hole == 7)
 					hole8();
-				} else if (hole == 8) {
+				else if (hole == 8)
 					hole9();
-				} else if (hole == 9) {
+				else if (hole == 9) {
 					hole = 10;
 					showscorecard();
 				}
@@ -1127,42 +1089,41 @@ function everything() {
 		}
 	};
 
-	//phaser
+	// phaser
 	game.state.add('GameState', GameState);
 	game.state.start('GameState');
 }
 
-//runs the current hole
+// runs the current hole
 function gameplay() {
-	//run hole
-	if (hole == 1) {
+	// run hole
+	if (hole == 1)
 		hole1();
-	} else if (hole == 2) {
+	else if (hole == 2)
 		hole2();
-	} else if (hole == 3) {
+	else if (hole == 3)
 		hole3();
-	} else if (hole == 4) {
+	else if (hole == 4)
 		hole4();
-	} else if (hole == 5) {
+	else if (hole == 5)
 		hole5();
-	} else if (hole == 6) {
+	else if (hole == 6)
 		hole6();
-	} else if (hole == 7) {
+	else if (hole == 7)
 		hole7();
-	} else if (hole == 8) {
+	else if (hole == 8)
 		hole8();
-	} else if (hole == 9) {
+	else if (hole == 9)
 		hole9();
-	}
 }
 
-//ball stops and character moves to new ball location
+// ball stops and character moves to new ball location
 function stop() {
 	ball.body.velocity.setTo(0, 0);
 	ball.body.moves = false;
 	updateTextQ();
-	gumbol = false;
-	if (powerupbol == false) {
+	gumBool = false;
+	if (powerupBool == false) {
 		poweruptext.setText('');
 	}
 	activatebutton.visible = false;
@@ -1175,10 +1136,10 @@ function stop() {
 	arrow.y = ball.y - ball.height / 2 - ball.height / 2 * Math.sin(angle * Math.PI / 180);
 }
 
-//resets ball and player
+// resets ball and player
 function reset() {
-	ball.x = teebox[0] + character.width + ball.width / 2;
-	ball.y = groundlevel;
+	ball.x = TEEBOX[0] + character.width + ball.width / 2;
+	ball.y = groundLevel;
 	power = 75;
 	angle = 45;
 	strokes = 0;
@@ -1186,7 +1147,7 @@ function reset() {
 	updateTextQ();
 }
 
-//listeners for buttons
+// listeners for buttons
 function mainlistener() {
 	ball.visible = true;
 	character.visible = true;
@@ -1201,7 +1162,7 @@ function mainlistener() {
 function practicelistener() {
 	updateTextI();
 
-	//prompt for what hole user wants to practice
+	// prompt for what hole user wants to practice
 	var phole = parseInt(prompt('Please Enter Hole Number (1-9)'));
 
 	if (isNaN(phole)) {
@@ -1214,26 +1175,26 @@ function practicelistener() {
 		phole = parseInt(prompt('Your number (' + phole + ') is less than 1. Please enter a number from 1 to 9', ''));
 	}
 	if (phole > 0 && phole <= 9) {
-		//start practice mode
+		// start practice mode
 		prac = true;
-		//unlimited powerups in practice mode
+		// unlimited powerups in practice mode
 		poweruplimittext.setText('∞');
 		homebutton.visible = true;
 		redobutton.visible = true;
-		//moving home button
-		homebutton.x = 58 * wr;
-		homebutton.y = 44 * hr;
+		// moving home button
+		homebutton.x = 58 * WR;
+		homebutton.y = 44 * HR;
 		homebutton.height = redobutton.height;
 		homebutton.width = homebutton.height;
-		disptextI.fontSize = 30 * hr;
-		disptextI.lineSpacing = -5 * hr;
+		disptextI.fontSize = 30 * HR;
+		disptextI.lineSpacing = -5 * HR;
 		hole = phole;
 		if (hole == 1) {
-			par = totalpar[0];
+			par = TOTAL_PAR[0];
 		} else {
-			par = totalpar[hole - 1] - totalpar[hole - 2];
+			par = TOTAL_PAR[hole - 1] - TOTAL_PAR[hole - 2];
 		}
-		//more spaces for mobile
+		// more spaces for mobile
 		if (isMobile) {
 			disptextI.setText('Practice     Hole: ' + hole + '\n                   Par: ' + par + '\nBest: 0       Strokes: 0');
 		} else {
@@ -1244,7 +1205,6 @@ function practicelistener() {
 	}
 }
 
-
 function listener() {
 	ball.visible = true;
 	information.visible = true;
@@ -1252,18 +1212,18 @@ function listener() {
 	scorecard.visible = false;
 	scorecardbg.visible = false;
 	disptextNext.visible = false;
-	for (var i = 0; i < allscores.length; i++) {
-		allscores[i].visible = false;
+	for (var i = 0; i < allScores.length; i++) {
+		allScores[i].visible = false;
 	}
 	parScore.visible = false;
 }
 
-//reload page
+// reload page
 function resetlistener() {
 	location.reload();
 }
 
-//to show info screen
+// to show info screen
 function infolistener() {
 	game.physics.arcade.gravity.y = 1000;
 	ball.body.velocity.setTo(0, 0);
@@ -1274,57 +1234,57 @@ function infolistener() {
 	mainbutton.visible = true;
 }
 
-//launches ball using button
+// launches ball using button
 function launchlistener() {
 	if (ball.body.velocity.x == 0) {
 		launch();
 	}
 }
 
-//launch
+// launch
 function launch() {
-	inwater = false;
-	icebol = icebol / 2;
-	if (reboostbol != 1) {
-		positionx.push(ball.x);
-		positiony.push(ball.y);
+	inWater = false;
+	iceBool = iceBool / 2;
+	if (reboostBool != 1) {
+		positionX.push(ball.x);
+		positionY.push(ball.y);
 		strokes++;
 	}
-	reboostbol = reboostbol / 2;
+	reboostBool = reboostBool / 2;
 	hideallpowerups();
-	ball.y = ball.y - 1 * hr;
+	ball.y = ball.y - 1 * HR;
 	ball.body.moves = true;
 	arrow.visible = false;
 
-	//if no powerups, set to default
-	if (powerupbol == false) {
+	// if no powerups, set to default
+	if (powerupBool == false) {
 		bXM = 1;
 		bYM = 1;
 		vXM = 1;
 		vYM = 1;
 		gravM = 1;
-	} else if ((powerupbol = true)) {
-		poweruplimit--;
+	} else if ((powerupBool = true)) {
+		powerupLimit--;
 	}
-	//launch physics with adjustable values for powerups
+	// launch physics with adjustable values for powerups
 	ball.body.bounce = new Phaser.Point(0.4 * bXM, 0.4 * bYM);
-	ball.body.velocity.setTo(mobilemult * vX * vXM, mobilemult * vY * vYM);
-	game.physics.arcade.gravity.y = mobilemult * 400 * gravM;
-	powerupbol = false;
+	ball.body.velocity.setTo(mobileMult * vX * vXM, mobileMult * vY * vYM);
+	game.physics.arcade.gravity.y = mobileMult * 400 * gravM;
+	powerupBool = false;
 	updateTextI();
 }
 
 function angleup() {
-	//if ball is on green, set angle to 180 or 0
+	// if ball is on green, set angle to 180 or 0
 	if (
 		ball.x >= green.x - green.width / 2 &&
 		ball.x <= green.x + green.width / 2 &&
 		ball.body.velocity.x == 0 &&
-		ball.y == groundlevel - 1 * hr
+		ball.y == groundLevel - 1 * HR
 	) {
 		angle = 180;
 	} else {
-		//70% speed
+		// 70% speed
 		angle = angle + 0.7;
 	}
 	updateTextQ();
@@ -1335,7 +1295,7 @@ function angledown() {
 		ball.x >= green.x - green.width / 2 &&
 		ball.x <= green.x + green.width / 2 &&
 		ball.body.velocity.x == 0 &&
-		ball.y == groundlevel - 1 * hr
+		ball.y == groundLevel - 1 * HR
 	) {
 		angle = 0;
 	} else {
@@ -1354,13 +1314,12 @@ function powerdown() {
 	updateTextQ();
 }
 
-
-//updates the information shown on screen
+// updates the information shown on screen
 function updateTextI() {
 	if (prac == false) {
 		disptextI.setText('Hole: ' + hole + '\nPar: ' + par + '\nStrokes: ' + strokes);
-		poweruplimittext.setText(poweruplimit);
-	} else if ((prac = true && strokesdisp.length > 0)) {
+		poweruplimittext.setText(powerupLimit);
+	} else if ((prac = true && strokesDisp.length > 0)) {
 		if (isMobile) {
 			disptextI.setText(
 				'Practice     Hole: ' +
@@ -1368,7 +1327,7 @@ function updateTextI() {
 				'\n                   Par: ' +
 				par +
 				'\nBest: ' +
-				Math.min.apply(null, strokesdisp) +
+				Math.min.apply(null, strokesDisp) +
 				'       Strokes: ' +
 				strokes
 			)
@@ -1379,13 +1338,13 @@ function updateTextI() {
 				'\n               Par: ' +
 				par +
 				'\nBest: ' +
-				Math.min.apply(null, strokesdisp) +
+				Math.min.apply(null, strokesDisp) +
 				'      Strokes: ' +
 				strokes
 			);
 		}
 
-	} else if ((prac = true && strokesdisp.length == 0)) {
+	} else if ((prac = true && strokesDisp.length == 0)) {
 		if (isMobile) {
 			disptextI.setText(
 				'Practice     Hole: ' +
@@ -1412,105 +1371,103 @@ function updateTextI() {
 	}
 };
 
-//updates characteristics of shot shown on screen
+// updates characteristics of shot shown on screen
 function updateTextQ() {
 	disptextQ.setText('Power: ' + Math.round(power) + '\nAngle: ' + Math.round(angle));
 }
 
-//updates score card with score and par
+// updates score card with score and par
 function updateScorecard() {
-	var i = strokesdisp.length - 1;
+	var i = strokesDisp.length - 1;
 	if (hole != 10) {
-		total = total + strokesdisp[i];
+		total = total + strokesDisp[i];
 	}
-	console.log(total)
-	console.log(strokesdisp[i])
-	sw = total - totalpar[i];
+	sw = total - TOTAL_PAR[i];
 
-	//different colors if over or under par
-	if (total > totalpar[i]) {
+	// different colors if over or under par
+	if (total > TOTAL_PAR[i]) {
 		parScore.addColor('#228B22', 0);
-		parScore.fontSize = 20 * hr;
+		parScore.fontSize = 20 * HR;
 		parScore.setText('+' + sw);
-	} else if (total < totalpar[i]) {
+	} else if (total < TOTAL_PAR[i]) {
 		parScore.addColor('#ff0000', 0);
-		parScore.fontSize = 20 * hr;
+		parScore.fontSize = 20 * HR;
 		parScore.setText(sw);
-	} else if (total == totalpar[i]) {
+	} else if (total == TOTAL_PAR[i]) {
 		parScore.addColor('#000000', 0);
-		parScore.fontSize = 21 * hr;
+		parScore.fontSize = 21 * HR;
 		parScore.setText('E');
 	}
-	if (strokesdisp.length < 9) {
-		parScore.fontSize = 25 * hr;
-		parScore.y = scorecard.y - 152 * hr + 48 * hr * i;
+	if (strokesDisp.length < 9) {
+		parScore.fontSize = 25 * HR;
+		parScore.y = scorecard.y - 152 * HR + 48 * HR * i;
 	} else {
-		parScore.y = scorecard.y + 310 * hr;
+		parScore.y = scorecard.y + 310 * HR;
 	}
 
-	//score on each hole shown on scorecard
-	if (strokesdisp.length >= 9) {
+	// score on each hole shown on scorecard
+	if (strokesDisp.length >= 9) {
 		scorecolor();
-		score9.setText(strokesdisp[8])
+		score9.setText(strokesDisp[8])
 		score10.setText(total)
-		if (total - totalpar[i] > 0) {
+		if (total - TOTAL_PAR[i] > 0) {
 			score10.addColor('#228B22', 0);
-		} else if (total - totalpar[i] == 0) {
+		} else if (total - TOTAL_PAR[i] == 0) {
 			score10.addColor('#000000', 0);
-		} else if (total - totalpar[i] < 0) {
+		} else if (total - TOTAL_PAR[i] < 0) {
 			score10.addColor('#ff0000', 0);
 		}
-	} else if (strokesdisp.length >= 8) {
+	} else if (strokesDisp.length >= 8) {
 		scorecolor();
-		score8.setText(strokesdisp[7])
-	} else if (strokesdisp.length >= 7) {
+		score8.setText(strokesDisp[7])
+	} else if (strokesDisp.length >= 7) {
 		scorecolor();
-		score7.setText(strokesdisp[6])
-	} else if (strokesdisp.length >= 6) {
+		score7.setText(strokesDisp[6])
+	} else if (strokesDisp.length >= 6) {
 		scorecolor();
-		score6.setText(strokesdisp[5])
-	} else if (strokesdisp.length >= 5) {
+		score6.setText(strokesDisp[5])
+	} else if (strokesDisp.length >= 5) {
 		scorecolor();
-		score5.setText(strokesdisp[4])
-	} else if (strokesdisp.length >= 4) {
+		score5.setText(strokesDisp[4])
+	} else if (strokesDisp.length >= 4) {
 		scorecolor();
-		score4.setText(strokesdisp[3])
-	} else if (strokesdisp.length >= 3) {
+		score4.setText(strokesDisp[3])
+	} else if (strokesDisp.length >= 3) {
 		scorecolor();
-		score3.setText(strokesdisp[2])
-	} else if (strokesdisp.length >= 2) {
+		score3.setText(strokesDisp[2])
+	} else if (strokesDisp.length >= 2) {
 		scorecolor();
-		score2.setText(strokesdisp[1])
-	} else if (strokesdisp.length >= 1) {
-		score1.setText(strokesdisp[0])
-		if (strokesdisp[i] - totalpar[i] > 0) {
+		score2.setText(strokesDisp[1])
+	} else if (strokesDisp.length >= 1) {
+		score1.setText(strokesDisp[0])
+		if (strokesDisp[i] - TOTAL_PAR[i] > 0) {
 			score1.addColor('#228B22', 0);
-		} else if (strokesdisp[i] - totalpar[i] == 0) {
+		} else if (strokesDisp[i] - TOTAL_PAR[i] == 0) {
 			score1.addColor('#000000', 0);
-		} else if (strokesdisp[i] - totalpar[i] < 0) {
+		} else if (strokesDisp[i] - TOTAL_PAR[i] < 0) {
 			score1.addColor('#ff0000', 0);
 		}
 	}
 
-	//sets color of number on scorecard
+	// sets color of number on scorecard
 	function scorecolor() {
-		for (var i = 1; i < allscores.length - 1; i++) {
-			if (strokesdisp[i] - (totalpar[i] - totalpar[i - 1]) > 0) {
-				allscores[i].addColor('#228B22', 0);
-			} else if (strokesdisp[i] - (totalpar[i] - totalpar[i - 1]) == 0) {
-				allscores[i].addColor('#000000', 0);
-			} else if (strokesdisp[i] - (totalpar[i] - totalpar[i - 1]) < 0) {
-				allscores[i].addColor('#ff0000', 0);
+		for (var i = 1; i < allScores.length - 1; i++) {
+			if (strokesDisp[i] - (TOTAL_PAR[i] - TOTAL_PAR[i - 1]) > 0) {
+				allScores[i].addColor('#228B22', 0);
+			} else if (strokesDisp[i] - (TOTAL_PAR[i] - TOTAL_PAR[i - 1]) == 0) {
+				allScores[i].addColor('#000000', 0);
+			} else if (strokesDisp[i] - (TOTAL_PAR[i] - TOTAL_PAR[i - 1]) < 0) {
+				allScores[i].addColor('#ff0000', 0);
 			}
 		}
 	}
 }
 
-//move to previous position
+// move to previous position
 function redolistener() {
 	ball.body.moves = false;
-	ball.x = positionx[positionx.length - 1];
-	ball.y = positiony[positiony.length - 1];
+	ball.x = positionX[positionX.length - 1];
+	ball.y = positionY[positionY.length - 1];
 	ball.body.velocity.setTo(0, 0);
 	character.x = ball.x - character.width / 2 - ball.width / 2;
 	character.y = ball.y - character.height / 2;
@@ -1521,9 +1478,9 @@ function redolistener() {
 	arrow.y = ball.y - ball.height / 2 - ball.height / 2 * Math.sin(angle * Math.PI / 180);
 }
 
-//when display powerup button is pressed
+// when display powerup button is pressed
 function disppulistener() {
-	if (poweruplimit > 0 || prac == true) {
+	if (powerupLimit > 0 || prac == true) {
 		if (powerupdispbg.visible == false) {
 			showallpowerups();
 		} else if (powerupdispbg.visible == true) {
@@ -1533,12 +1490,12 @@ function disppulistener() {
 	}
 }
 
-//displays all powerups
+// displays all powerups
 function showallpowerups() {
 	if (ball.body.velocity.x == 0) {
-		//and all other buttons
+		// and all other buttons
 		powerupdispbg.visible = true;
-		//not availible when score=0 or in practice mode
+		// not availible when score=0 or in practice mode
 		if (strokes > 0 && prac == false) {
 			minus1.visible = true;
 			mulligan.visible = true;
@@ -1553,7 +1510,7 @@ function showallpowerups() {
 	}
 }
 
-//hides all powerups
+// hides all powerups
 function hideallpowerups() {
 	powerupdispbg.visible = false;
 	superball.visible = false;
@@ -1567,22 +1524,22 @@ function hideallpowerups() {
 	gumball.visible = false;
 }
 
-//to activate powerup
+// to activate powerup
 function activatepu() {
 	if (ball.body.velocity.y != 0) {
-		if (reboostbol == 2 || reboostbol == 1) {
+		if (reboostBool == 2 || reboostBool == 1) {
 			launch();
-			reboostbol = null;
+			reboostBool = null;
 			activatebutton.visible = false;
-		} else if (dropballbol == 2) {
+		} else if (dropBool == 2) {
 			ball.body.velocity.setTo(0, 0);
-			dropballbol = null;
+			dropBool = null;
 			activatebutton.visible = false;
 		}
 	}
 }
 
-//superball qualities
+// superball qualities
 function superballlistener() {
 	hideallpowerups();
 	poweruptext.setText('Power-Up: Super Ball');
@@ -1593,16 +1550,16 @@ function superballlistener() {
 	vYM = 7 / 4;
 	gravM = 1.5;
 
-	powerupbol = true;
-	//to disable other powerups
-	gumbol = false;
-	laserbol = false;
-	reboostbol = null;
-	dropballbol = null;
+	powerupBool = true;
+	// to disable other powerups
+	gumBool = false;
+	laserBool = false;
+	reboostBool = null;
+	dropBool = null;
 	activatebutton.visible = false;
 }
 
-//bouncy ball qualities
+// bouncy ball qualities
 function bouncyballlistener() {
 	hideallpowerups();
 	poweruptext.setText('Power-Up: Bouncy Ball');
@@ -1613,19 +1570,19 @@ function bouncyballlistener() {
 	vYM = 1.05;
 	gravM = 1;
 
-	powerupbol = true;
-	//to disable other powerups
-	gumbol = false;
-	laserbol = false;
-	reboostbol = null;
-	dropballbol = null;
+	powerupBool = true;
+	// to disable other powerups
+	gumBool = false;
+	laserBool = false;
+	reboostBool = null;
+	dropBool = null;
 	activatebutton.visible = false;
 }
 
-//gumball qualities
+// gumball qualities
 function gumballlistener() {
 	ball.y = ball.y - 1;
-	gumbol = true;
+	gumBool = true;
 
 	hideallpowerups();
 	poweruptext.setText('Power-Up: Gum Ball');
@@ -1636,16 +1593,16 @@ function gumballlistener() {
 	vYM = 1;
 	gravM = 1;
 
-	powerupbol = true;
-	laserbol = false;
-	reboostbol = null;
-	dropballbol = null;
+	powerupBool = true;
+	laserBool = false;
+	reboostBool = null;
+	dropBool = null;
 	activatebutton.visible = false;
 }
 
-//ice ball qualities
+// ice ball qualities
 function iceballlistener() {
-	icebol = 2;
+	iceBool = 2;
 	hideallpowerups();
 	poweruptext.setText('Power-Up: Ice Ball');
 
@@ -1655,18 +1612,18 @@ function iceballlistener() {
 	vYM = 1;
 	gravM = 1;
 
-	powerupbol = true;
-	//to disable other powerups
-	gumbol = false;
-	laserbol = false;
-	reboostbol = null;
-	dropballbol = null;
+	powerupBool = true;
+	// to disable other powerups
+	gumBool = false;
+	laserBool = false;
+	reboostBool = null;
+	dropBool = null;
 	activatebutton.visible = false;
 }
 
-//laserball qualities
+// laserball qualities
 function laserballlistener() {
-	laserbol = true;
+	laserBool = true;
 	power = 100;
 	updateTextQ();
 	hideallpowerups();
@@ -1678,18 +1635,18 @@ function laserballlistener() {
 	vYM = 1.2;
 	gravM = 0.2;
 
-	powerupbol = true;
-	//to disable other powerups
-	gumbol = false;
-	reboostbol = null;
-	dropballbol = null;
+	powerupBool = true;
+	// to disable other powerups
+	gumBool = false;
+	reboostBool = null;
+	dropBool = null;
 	activatebutton.visible = false;
 }
 
-//reboost qualities
+// reboost qualities
 function reboostlistener() {
 	activatebutton.visible = true;
-	reboostbol = 2;
+	reboostBool = 2;
 	hideallpowerups();
 	poweruptext.setText('Power-Up: Reboost *');
 
@@ -1699,17 +1656,17 @@ function reboostlistener() {
 	vYM = 1;
 	gravM = 1;
 
-	powerupbol = true;
-	//to disable other powerups
-	gumbol = false;
-	laserbol = false;
-	dropballbol = null;
+	powerupBool = true;
+	// to disable other powerups
+	gumBool = false;
+	laserBool = false;
+	dropBool = null;
 }
 
-//dropball qualities
+// dropball qualities
 function dropballlistener() {
 	activatebutton.visible = true;
-	dropballbol = 2;
+	dropBool = 2;
 	hideallpowerups();
 	poweruptext.setText('Power-Up: Drop Ball *');
 
@@ -1719,17 +1676,17 @@ function dropballlistener() {
 	vYM = 1;
 	gravM = 1;
 
-	powerupbol = true;
-	//to disable other powerups
-	gumbol = false;
-	laserbol = false;
-	reboostbol = null;
+	powerupBool = true;
+	// to disable other powerups
+	gumBool = false;
+	laserBool = false;
+	reboostBool = null;
 }
 
-//not an onlaunch powerups
-//-1
+// not an onlaunch powerups
+// -1
 function minus1listener() {
-	poweruplimit--;
+	powerupLimit--;
 	hideallpowerups();
 	strokes--;
 	updateTextI();
@@ -1741,27 +1698,27 @@ function minus1listener() {
 	vYM = 1;
 	gravM = 1;
 
-	//to disable other powerups
-	gumbol = false;
-	laserbol = false;
-	reboostbol = null;
-	dropballbol = null;
+	// to disable other powerups
+	gumBool = false;
+	laserBool = false;
+	reboostBool = null;
+	dropBool = null;
 	activatebutton.visible = false;
 }
 
-//mulligan powerup
+// mulligan powerup
 function mulliganlistener() {
-	poweruplimit--;
+	powerupLimit--;
 	hideallpowerups();
 	redolistener();
-	if (inwater == true) {
+	if (inWater == true) {
 		strokes = strokes - 2;
 	} else {
 		strokes--;
 	}
 	updateTextI();
 	poweruptext.setText('Power-Up: Mulligan');
-	inwater = false;
+	inWater = false;
 
 	bXM = 1;
 	bYM = 1;
@@ -1769,147 +1726,147 @@ function mulliganlistener() {
 	vYM = 1;
 	gravM = 1;
 
-	//to disable other powerups
-	gumbol = false;
-	laserbol = false;
-	reboostbol = null;
-	dropballbol = null;
+	// to disable other powerups
+	gumBool = false;
+	laserBool = false;
+	reboostBool = null;
+	dropBool = null;
 	activatebutton.visible = false;
 }
 
-//characteristics all holes share
+// characteristics all holes share
 function defhole() {
 	if (hole == 1) {
-		par = totalpar[0];
+		par = TOTAL_PAR[0];
 	} else {
-		par = totalpar[hole - 1] - totalpar[hole - 2];
+		par = TOTAL_PAR[hole - 1] - TOTAL_PAR[hole - 2];
 	}
 
-	//background
-	background.x = width / 2;
-	background.y = height / 2;
-	background.height = height;
-	background.width = width;
+	// background
+	background.x = WIDTH / 2;
+	background.y = HEIGHT / 2;
+	background.height = HEIGHT;
+	background.width = WIDTH;
 
-	//player
-	character.width = 100 * wr;
-	character.height = 171 * hr;
-	character.x = teebox[0] + character.width / 2;
-	character.y = groundlevel - character.height / 2;
-	flipcharacter.width = 100 * wr;
-	flipcharacter.height = 171 * hr;
-	flipcharacter.x = teebox[1] + flipcharacter.width / 2 + 3 * ball.width / 2;
-	flipcharacter.y = groundlevel - flipcharacter.height / 2;
+	// player
+	character.width = 100 * WR;
+	character.height = 171 * HR;
+	character.x = TEEBOX[0] + character.width / 2;
+	character.y = groundLevel - character.height / 2;
+	flipcharacter.width = 100 * WR;
+	flipcharacter.height = 171 * HR;
+	flipcharacter.x = TEEBOX[1] + flipcharacter.width / 2 + 3 * ball.width / 2;
+	flipcharacter.y = groundLevel - flipcharacter.height / 2;
 
-	//green
-	green.width = 310 * wr;
+	// green
+	green.width = 310 * WR;
 	green.anchor.setTo(0.5, 0);
-	green.x = width - green.width / 2;
-	green.y = groundlevel;
+	green.x = WIDTH - green.width / 2;
+	green.y = groundLevel;
 
-	//cup
-	cup.height = 40 * hr;
-	cup.width = 70 * wr;
-	cup.y = groundlevel + 36 * hr;
+	// cup
+	cup.height = 40 * HR;
+	cup.width = 70 * WR;
+	cup.y = groundLevel + 36 * HR;
 
-	//flag
+	// flag
 	flag.x = green.x - green.width / 2 + cup.width / 2 + Math.random() * (green.width - flag.width - cup.width / 2);
-	flag.y = groundlevel;
-	flag.width = 103 * wr;
-	flag.height = 200 * hr;
+	flag.y = groundLevel;
+	flag.width = 103 * WR;
+	flag.height = 200 * HR;
 
-	//flag #
+	// flag #
 	flagtext.setText(hole);
 	flagtext.x = flag.x + 6 * flag.width / 16;
-	flagtext.y = flag.y - 6 * flag.height / 8 + 5 * hr;
+	flagtext.y = flag.y - 6 * flag.height / 8 + 5 * HR;
 
-	//ground
-	floor1.height = height - groundlevel;
+	// ground
+	floor1.height = HEIGHT - groundLevel;
 	floor1.x = 0;
-	floor1.y = groundlevel;
+	floor1.y = groundLevel;
 
-	floor2.height = height - groundlevel;
-	floor2.y = groundlevel;
+	floor2.height = HEIGHT - groundLevel;
+	floor2.y = groundLevel;
 	floor3.width = cup.width;
-	floor3.y = cup.y - 1 * hr;
-	floor3.height = height - floor3.y;
+	floor3.y = cup.y - 1 * HR;
+	floor3.height = HEIGHT - floor3.y;
 
-	//ball
+	// ball
 	ball.x = character.x + character.width / 2 + ball.width / 2;
-	ball.y = groundlevel;
-	ball.width = 28 * wr;
-	ball.height = 28 * hr;
+	ball.y = groundLevel;
+	ball.width = 28 * WR;
+	ball.height = 28 * HR;
 	ball.body.moves = false;
 
-	//set values from hole position
-	cup.x = flag.x - cup.width / 2 + 5 * wr;
+	// set values from hole position
+	cup.x = flag.x - cup.width / 2 + 5 * WR;
 	floor3.x = cup.x;
 	floor1.width = cup.x;
 	floor2.x = cup.x + cup.width;
-	floor2.width = width - floor2.x;
+	floor2.width = WIDTH - floor2.x;
 }
 
 function hole1() {
 	hole = 1;
 	defhole();
 
-	//sand
+	// sand
 	sand1.width = 3 * ball.width;
-	sand1.height = 10 * hr;
-	sand1.x = width / 2 + 20 * wr;
-	sand1.y = groundlevel;
+	sand1.height = 10 * HR;
+	sand1.x = WIDTH / 2 + 20 * WR;
+	sand1.y = groundLevel;
 
-	//water
+	// water
 	water1.width = 5 * ball.width / 2;
-	water1.height = 35 * hr;
-	water1.x = width / 4;
-	water1.y = groundlevel;
+	water1.height = 35 * HR;
+	water1.x = WIDTH / 4;
+	water1.y = groundLevel;
 
-	//everything else off screen
-	ground1.x = 2 * width;
+	// everything else off screen
+	ground1.x = 2 * WIDTH;
 	ground1.y = null;
 	ground1.width = null;
 	ground1.height = null;
 
-	ground2.x = 2 * width;
+	ground2.x = 2 * WIDTH;
 	ground2.y = null;
 	ground2.width = null;
 	ground2.height = null;
 
-	ground3.x = 2 * width;
+	ground3.x = 2 * WIDTH;
 	ground3.y = null;
 	ground3.width = null;
 	ground3.height = null;
 
-	ground4.x = 2 * width;
+	ground4.x = 2 * WIDTH;
 	ground4.y = null;
 	ground4.width = null;
 	ground4.height = null;
 
-	ground5.x = 2 * width;
+	ground5.x = 2 * WIDTH;
 	ground5.y = null;
 	ground5.width = null;
 	ground5.height = null;
 
-	sand2.x = 2 * width;
+	sand2.x = 2 * WIDTH;
 	sand2.y = null;
 	sand2.width = null;
 	sand2.height = null;
 
-	water2.x = 2 * width;
+	water2.x = 2 * WIDTH;
 	water2.y = null;
 	water2.width = null;
 	water2.height = null;
 
-	egg.x = 2 * width;
+	egg.x = 2 * WIDTH;
 	egg.y = null;
 	egg.width = null;
 	egg.height = null;
 
-	hidegg.x = 2 * width;
-	hidegg.y = null;
-	hidegg.width = null;
-	hidegg.height = null;
+	hidenegg.x = 2 * WIDTH;
+	hidenegg.y = null;
+	hidenegg.width = null;
+	hidenegg.height = null;
 }
 
 function hole2() {
@@ -1917,306 +1874,306 @@ function hole2() {
 	defhole();
 
 	ground1.width = floor3.width;
-	ground1.height = height / 2 - 100 * hr;
-	ground1.x = width / 2 - ground1.width / 2;
-	ground1.y = groundlevel - ground1.height;
+	ground1.height = HEIGHT / 2 - 100 * HR;
+	ground1.x = WIDTH / 2 - ground1.width / 2;
+	ground1.y = groundLevel - ground1.height;
 
-	//sand
-	sand1.x = ground1.x - sand1.width - 30 * wr;
-	sand1.width = 90 * wr;
-	sand1.height = 10 * hr;
-	sand1.y = groundlevel;
+	// sand
+	sand1.x = ground1.x - sand1.width - 30 * WR;
+	sand1.width = 90 * WR;
+	sand1.height = 10 * HR;
+	sand1.y = groundLevel;
 
-	//water
-	water1.x = ground1.x + ground1.width + 30 * wr;
-	water1.y = groundlevel;
-	water1.height = 50 * hr;
-	water1.width = 80 * wr;
+	// water
+	water1.x = ground1.x + ground1.width + 30 * WR;
+	water1.y = groundLevel;
+	water1.height = 50 * HR;
+	water1.width = 80 * WR;
 
-	//everything else off screen
-	ground2.x = 2 * width;
+	// everything else off screen
+	ground2.x = 2 * WIDTH;
 	ground2.y = null;
 	ground2.width = null;
 	ground2.height = null;
 
-	ground3.x = 2 * width;
+	ground3.x = 2 * WIDTH;
 	ground3.y = null;
 	ground3.width = null;
 	ground3.height = null;
 
-	ground4.x = 2 * width;
+	ground4.x = 2 * WIDTH;
 	ground4.y = null;
 	ground4.width = null;
 	ground4.height = null;
 
-	ground5.x = 2 * width;
+	ground5.x = 2 * WIDTH;
 	ground5.y = null;
 	ground5.width = null;
 	ground5.height = null;
 
-	sand2.x = 2 * width;
+	sand2.x = 2 * WIDTH;
 	sand2.y = null;
 	sand2.width = null;
 	sand2.height = null;
 
-	water2.x = 2 * width;
+	water2.x = 2 * WIDTH;
 	water2.y = null;
 	water2.width = null;
 	water2.height = null;
 
-	egg.x = 2 * width;
+	egg.x = 2 * WIDTH;
 	egg.y = null;
 	egg.width = null;
 	egg.height = null;
 
-	hidegg.x = 2 * width;
-	hidegg.y = null;
-	hidegg.width = null;
-	hidegg.height = null;
+	hidenegg.x = 2 * WIDTH;
+	hidenegg.y = null;
+	hidenegg.width = null;
+	hidenegg.height = null;
 }
 
 function hole3() {
 	hole = 3;
 	defhole();
 
-	ground1.width = width / 6;
-	ground1.height = 2 * groundlevel / 9;
-	ground1.x = width / 6;
-	ground1.y = groundlevel - ground1.height;
+	ground1.width = WIDTH / 6;
+	ground1.height = 2 * groundLevel / 9;
+	ground1.x = WIDTH / 6;
+	ground1.y = groundLevel - ground1.height;
 
-	ground2.width = width / 7;
+	ground2.width = WIDTH / 7;
 	ground2.height = 2 * ground1.height;
 	ground2.x = ground1.x + ground1.width;
-	ground2.y = groundlevel - ground2.height;
+	ground2.y = groundLevel - ground2.height;
 
-	ground3.width = width / 7;
+	ground3.width = WIDTH / 7;
 	ground3.height = 3 * ground1.height;
 	ground3.x = ground2.x + ground2.width;
-	ground3.y = groundlevel - ground3.height;
+	ground3.y = groundLevel - ground3.height;
 
 	ground4.height = (ground1.height - ground2.height) / 2 + ground2.height;
 	ground4.x = ground3.x + ground3.width;
 	ground4.width = green.x - green.width / 2 - ground4.x;
-	ground4.y = groundlevel - ground4.height;
+	ground4.y = groundLevel - ground4.height;
 
-	water1.width = 70 * wr;
-	water1.x = width - water1.width;
-	water1.y = groundlevel;
-	water1.height = 35 * hr;
+	water1.width = 70 * WR;
+	water1.x = WIDTH - water1.width;
+	water1.y = groundLevel;
+	water1.height = 35 * HR;
 
-	//everything else off screen
-	ground5.x = 2 * width;
+	// everything else off screen
+	ground5.x = 2 * WIDTH;
 	ground5.width = 0;
 	ground5.height = 0;
 	ground5.y = 0;
 
-	sand1.x = 2 * width;
+	sand1.x = 2 * WIDTH;
 	sand1.y = null;
 	sand1.width = null;
 	sand1.height = null;
 
-	sand2.x = 2 * width;
+	sand2.x = 2 * WIDTH;
 	sand2.y = null;
 	sand2.width = null;
 	sand2.height = null;
 
-	water2.x = 2 * width;
+	water2.x = 2 * WIDTH;
 	water2.y = null;
 	water2.width = null;
 	water2.height = null;
 
-	egg.x = 2 * width;
+	egg.x = 2 * WIDTH;
 	egg.y = null;
 	egg.width = null;
 	egg.height = null;
 
-	hidegg.x = 2 * width;
-	hidegg.y = null;
-	hidegg.width = null;
-	hidegg.height = null;
+	hidenegg.x = 2 * WIDTH;
+	hidenegg.y = null;
+	hidenegg.width = null;
+	hidenegg.height = null;
 }
 
 function hole4() {
 	hole = 4;
 	defhole();
 
-	ground1.x = width / 8;
+	ground1.x = WIDTH / 8;
 	ground1.width = floor3.width;
-	ground1.height = height / 2 - 100 * hr;
-	ground1.y = groundlevel - ground1.height;
+	ground1.height = HEIGHT / 2 - 100 * HR;
+	ground1.y = groundLevel - ground1.height;
 
 	ground2.height = 13 * ground1.height / 8;
 	ground2.width = ground1.width;
-	ground2.x = 7 * width / 32;
+	ground2.x = 7 * WIDTH / 32;
 	ground2.y = 0;
 
 	ground3.height = 11 * ground1.height / 8;
 	ground3.width = ground1.width;
-	ground3.x = 13 * width / 32;
+	ground3.x = 13 * WIDTH / 32;
 	ground3.y = 0;
 
 	ground4.width = ground1.width;
-	ground4.height = height / 4;
-	ground4.x = 13 * width / 32;
-	ground4.y = groundlevel - ground4.height;
+	ground4.height = HEIGHT / 4;
+	ground4.x = 13 * WIDTH / 32;
+	ground4.y = groundLevel - ground4.height;
 
-	ground5.height = groundlevel - 2 * ball.height;
+	ground5.height = groundLevel - 2 * ball.height;
 	ground5.width = ground1.width;
-	ground5.x = 2 * width / 3;
+	ground5.x = 2 * WIDTH / 3;
 	ground5.y = 0;
 
-	//everything else off screen
-	sand1.x = 2 * width;
+	// everything else off screen
+	sand1.x = 2 * WIDTH;
 	sand1.y = null;
 	sand1.width = null;
 	sand1.height = null;
 
-	sand2.x = 2 * width;
+	sand2.x = 2 * WIDTH;
 	sand2.y = null;
 	sand2.width = null;
 	sand2.height = null;
 
-	water1.x = 2 * width;
+	water1.x = 2 * WIDTH;
 	water1.y = null;
 	water1.width = null;
 	water1.height = null;
 
-	water2.x = 2 * width;
+	water2.x = 2 * WIDTH;
 	water2.y = null;
 	water2.width = null;
 	water2.height = null;
 
-	egg.x = 2 * width;
+	egg.x = 2 * WIDTH;
 	egg.y = null;
 	egg.width = null;
 	egg.height = null;
 
-	hidegg.x = 2 * width;
-	hidegg.y = null;
-	hidegg.width = null;
-	hidegg.height = null;
+	hidenegg.x = 2 * WIDTH;
+	hidenegg.y = null;
+	hidenegg.width = null;
+	hidenegg.height = null;
 }
 
 function hole5() {
 	hole = 5;
 	defhole();
 
-	ground1.x = 5 * width / 12;
+	ground1.x = 5 * WIDTH / 12;
 	ground1.y = 0;
 	ground1.width = cup.width;
-	ground1.height = groundlevel - 5 * ball.height / 2;
+	ground1.height = groundLevel - 5 * ball.height / 2;
 
-	ground2.height = 15 * height / 32;
-	ground2.x = 7 * width / 12;
-	ground2.y = groundlevel - ground2.height;
+	ground2.height = 15 * HEIGHT / 32;
+	ground2.x = 7 * WIDTH / 12;
+	ground2.y = groundLevel - ground2.height;
 	ground2.width = cup.width;
 
-	sand1.x = ground2.x + 8 * wr;
+	sand1.x = ground2.x + 8 * WR;
 	sand1.y = ground2.y;
-	sand1.width = ground2.width - 16 * wr;
+	sand1.width = ground2.width - 16 * WR;
 	sand1.height = 10;
 
-	water1.width = 75 * wr;
+	water1.width = 75 * WR;
 	water1.x = ground1.x - water1.width;
-	water1.y = groundlevel;
-	water1.height = 35 * hr;
+	water1.y = groundLevel;
+	water1.height = 35 * HR;
 
 	water2.x = ground2.x + ground2.width + ball.width;
-	water2.y = groundlevel;
-	water2.width = 75 * wr;
-	water2.height = 35 * hr;
+	water2.y = groundLevel;
+	water2.width = 75 * WR;
+	water2.height = 35 * HR;
 
-	//everything else off screen
-	ground3.x = 2 * width;
+	// everything else off screen
+	ground3.x = 2 * WIDTH;
 	ground3.y = null;
 	ground3.width = null;
 	ground3.height = null;
 
-	ground4.x = 2 * width;
+	ground4.x = 2 * WIDTH;
 	ground4.y = null;
 	ground4.width = null;
 	ground4.height = null;
 
-	ground5.x = 2 * width;
+	ground5.x = 2 * WIDTH;
 	ground5.y = null;
 	ground5.width = null;
 	ground5.height = null;
 
-	sand2.x = 2 * width;
+	sand2.x = 2 * WIDTH;
 	sand2.y = null;
 	sand2.width = null;
 	sand2.height = null;
 
-	egg.x = 2 * width;
+	egg.x = 2 * WIDTH;
 	egg.y = null;
 	egg.width = null;
 	egg.height = null;
 
-	hidegg.x = 2 * width;
-	hidegg.y = null;
-	hidegg.width = null;
-	hidegg.height = null;
+	hidenegg.x = 2 * WIDTH;
+	hidenegg.y = null;
+	hidenegg.width = null;
+	hidenegg.height = null;
 }
 
 function hole6() {
 	hole = 6;
 	defhole();
 
-	ground1.x = width / 3 + 40 * wr;
-	ground1.y = 80 * hr;
-	ground1.width = 80 * wr;
-	ground1.height = groundlevel - ground1.y;
+	ground1.x = WIDTH / 3 + 40 * WR;
+	ground1.y = 80 * HR;
+	ground1.width = 80 * WR;
+	ground1.height = groundLevel - ground1.y;
 
-	ground2.width = 180 * wr;
+	ground2.width = 180 * WR;
 	ground2.x = ground1.x - ground2.width;
-	ground2.y = height / 2 + 10 * hr;
-	ground2.height = 70 * hr;
+	ground2.y = HEIGHT / 2 + 10 * HR;
+	ground2.height = 70 * HR;
 
 	ground3.x = 0;
-	ground3.y = height / 3 - 40 * hr;
-	ground3.width = 230 * wr;
+	ground3.y = HEIGHT / 3 - 40 * HR;
+	ground3.width = 230 * WR;
 	ground3.height = ground2.height;
 
-	ground4.x = width / 2;
+	ground4.x = WIDTH / 2;
 	ground4.y = 0;
 	ground4.width = ground1.width;
-	ground4.height = groundlevel - 100 * hr;
+	ground4.height = groundLevel - 100 * HR;
 
 	ground5.x = ground4.x + 3 * ground4.width;
-	ground5.height = height / 4;
-	ground5.y = groundlevel - ground5.height;
-	ground5.width = 60 * wr;
+	ground5.height = HEIGHT / 4;
+	ground5.y = groundLevel - ground5.height;
+	ground5.width = 60 * WR;
 
 	sand1.x = ground4.x;
-	sand1.y = groundlevel;
+	sand1.y = groundLevel;
 	sand1.width = ground4.width;
-	sand1.height = 10 * hr;
+	sand1.height = 10 * HR;
 
-	water1.x = ground1.x + 10 * wr;
+	water1.x = ground1.x + 10 * WR;
 	water1.y = ground1.y;
-	water1.width = ground1.width - 20 * wr;
-	water1.height = 40 * hr;
+	water1.width = ground1.width - 20 * WR;
+	water1.height = 40 * HR;
 
-	//everything else off screen
-	sand2.x = 2 * width;
+	// everything else off screen
+	sand2.x = 2 * WIDTH;
 	sand2.y = null;
 	sand2.width = null;
 	sand2.height = null;
 
-	water2.x = 2 * width;
+	water2.x = 2 * WIDTH;
 	water2.y = null;
 	water2.width = null;
 	water2.height = null;
 
-	egg.x = 2 * width;
+	egg.x = 2 * WIDTH;
 	egg.y = null;
 	egg.width = null;
 	egg.height = null;
 
-	hidegg.x = 2 * width;
-	hidegg.y = null;
-	hidegg.width = null;
-	hidegg.height = null;
+	hidenegg.x = 2 * WIDTH;
+	hidenegg.y = null;
+	hidenegg.width = null;
+	hidenegg.height = null;
 }
 
 function hole7() {
@@ -2224,58 +2181,58 @@ function hole7() {
 	defhole();
 
 	egg.height = 5 * ball.height / 4;
-	egg.y = groundlevel - egg.height;
+	egg.y = groundLevel - egg.height;
 
-	ground1.height = 4 * height / 7;
-	ground1.x = width / 4;
+	ground1.height = 4 * HEIGHT / 7;
+	ground1.x = WIDTH / 4;
 	ground1.y = egg.y - ground1.height;
 	ground1.width = cup.width;
 
 	egg.x = ground1.x;
 	egg.width = ground1.width;
 
-	hidegg.x = egg.x + egg.width / 2;
-	hidegg.y = egg.y;
-	hidegg.width = 7 * egg.width / 16;
-	hidegg.height = egg.height;
+	hidenegg.x = egg.x + egg.width / 2;
+	hidenegg.y = egg.y;
+	hidenegg.width = 7 * egg.width / 16;
+	hidenegg.height = egg.height;
 
-	water2.x = width / 7;
-	water2.y = groundlevel;
+	water2.x = WIDTH / 7;
+	water2.y = groundLevel;
 	water2.width = 7 * ball.width / 2;
-	water2.height = 35 * hr;
+	water2.height = 35 * HR;
 
-	sand2.x = 5 * width / 12;
-	sand2.y = groundlevel;
+	sand2.x = 5 * WIDTH / 12;
+	sand2.y = groundLevel;
 	sand2.width = 3 * ball.width;
-	sand2.height = 10 * wr;
+	sand2.height = 10 * WR;
 
-	water1.x = width / 2;
-	water1.y = groundlevel;
+	water1.x = WIDTH / 2;
+	water1.y = groundLevel;
 	water1.width = 3 * ball.width;
-	water1.height = 35 * hr;
+	water1.height = 35 * HR;
 
-	//everything else off screen
-	ground2.x = 2 * width;
+	// everything else off screen
+	ground2.x = 2 * WIDTH;
 	ground2.y = null;
 	ground2.width = null;
 	ground2.height = null;
 
-	ground3.x = 2 * width;
+	ground3.x = 2 * WIDTH;
 	ground3.y = null;
 	ground3.width = null;
 	ground3.height = null;
 
-	ground4.x = 2 * width;
+	ground4.x = 2 * WIDTH;
 	ground4.y = null;
 	ground4.width = null;
 	ground4.height = null;
 
-	ground5.x = 2 * width;
+	ground5.x = 2 * WIDTH;
 	ground5.y = null;
 	ground5.width = null;
 	ground5.height = null;
 
-	sand1.x = 2 * width;
+	sand1.x = 2 * WIDTH;
 	sand1.y = null;
 	sand1.width = null;
 	sand1.height = null;
@@ -2285,9 +2242,9 @@ function hole8() {
 	hole = 8;
 	defhole();
 
-	ground1.height = height / 4;
-	ground1.x = width / 3;
-	ground1.y = groundlevel - ground1.height;
+	ground1.height = HEIGHT / 4;
+	ground1.x = WIDTH / 3;
+	ground1.y = groundLevel - ground1.height;
 	ground1.width = 2 * ball.width;
 
 	ground2.x = ground1.x;
@@ -2295,144 +2252,144 @@ function hole8() {
 	ground2.width = ground1.width;
 	ground2.height = ground1.y - 5 * ball.height / 2;
 
-	sand1.x = ground1.x + 8 * wr;
+	sand1.x = ground1.x + 8 * WR;
 	sand1.y = ground1.y;
-	sand1.width = ground1.width - 16 * wr;
-	sand1.height = 10 * hr;
+	sand1.width = ground1.width - 16 * WR;
+	sand1.height = 10 * HR;
 
 	water1.width = 5 * ball.width / 2;
 	water1.x = ground1.x - water1.width - ball.width;
-	water1.y = groundlevel;
-	water1.height = 35 * hr;
+	water1.y = groundLevel;
+	water1.height = 35 * HR;
 
 	sand2.width = 2 * ball.width;
 	sand2.x = water1.x - 5 * ball.width / 2 - sand2.width;
-	sand2.y = groundlevel;
-	sand2.height = 10 * hr;
+	sand2.y = groundLevel;
+	sand2.height = 10 * HR;
 
-	water2.x = 3 * width / 5 + 3 * ball.width / 2;
-	water2.y = groundlevel;
+	water2.x = 3 * WIDTH / 5 + 3 * ball.width / 2;
+	water2.y = groundLevel;
 	water2.width = 5 * ball.width / 2;
-	water2.height = 35 * hr;
+	water2.height = 35 * HR;
 
-	//everything else off screen
-	ground3.x = 2 * width;
+	// everything else off screen
+	ground3.x = 2 * WIDTH;
 	ground3.y = null;
 	ground3.width = null;
 	ground3.height = null;
 
-	ground4.x = 2 * width;
+	ground4.x = 2 * WIDTH;
 	ground4.y = null;
 	ground4.width = null;
 	ground4.height = null;
 
-	ground5.x = 2 * width;
+	ground5.x = 2 * WIDTH;
 	ground5.y = null;
 	ground5.width = null;
 	ground5.height = null;
 
-	egg.x = 2 * width;
+	egg.x = 2 * WIDTH;
 	egg.y = null;
 	egg.width = null;
 	egg.height = null;
 
-	hidegg.x = 2 * width;
-	hidegg.y = null;
-	hidegg.width = null;
-	hidegg.height = null;
+	hidenegg.x = 2 * WIDTH;
+	hidenegg.y = null;
+	hidenegg.width = null;
+	hidenegg.height = null;
 }
 
 function hole9() {
 	hole = 9;
 	defhole();
 
-	ground1.height = height / 4;
-	ground1.x = width / 6;
-	ground1.y = groundlevel - ground1.height;
-	ground1.width = width / 8;
+	ground1.height = HEIGHT / 4;
+	ground1.x = WIDTH / 6;
+	ground1.y = groundLevel - ground1.height;
+	ground1.width = WIDTH / 8;
 
-	ground2.height = height / 2 - ball.height;
+	ground2.height = HEIGHT / 2 - ball.height;
 	ground2.x = ground1.x + ground1.width;
-	ground2.y = groundlevel - ground2.height;
+	ground2.y = groundLevel - ground2.height;
 	ground2.width = ground1.width;
 
-	ground3.x = width / 2;
+	ground3.x = WIDTH / 2;
 	ground3.y = 0;
 	ground3.width = cup.width;
-	ground3.height = groundlevel - 3 * ball.height;
+	ground3.height = groundLevel - 3 * ball.height;
 
 	sand1.width = 5 * ball.width / 2;
 	sand1.x = ground2.x - sand1.width - 3 * ball.width / 2;
 	sand1.y = ground1.y;
-	sand1.height = 10 * hr;
+	sand1.height = 10 * HR;
 
-	sand2.x = 2 * width / 3;
-	sand2.y = groundlevel;
+	sand2.x = 2 * WIDTH / 3;
+	sand2.y = groundLevel;
 	sand2.width = 3 * ball.width;
-	sand2.height = 10 * hr;
+	sand2.height = 10 * HR;
 
 	water1.width = 2 * ball.width;
 	water1.x = ground2.x - sand1.width - ball.width + ground2.width;
 	water1.y = ground2.y;
-	water1.height = 35 * hr;
+	water1.height = 35 * HR;
 
 	water2.x = ground3.x;
-	water2.y = groundlevel;
+	water2.y = groundLevel;
 	water2.width = ground3.width;
-	water2.height = 35 * hr;
+	water2.height = 35 * HR;
 
-	//everything else off screen
-	ground4.x = 2 * width;
+	// everything else off screen
+	ground4.x = 2 * WIDTH;
 	ground4.y = null;
 	ground4.width = null;
 	ground4.height = null;
 
-	ground5.x = 2 * width;
+	ground5.x = 2 * WIDTH;
 	ground5.y = null;
 	ground5.width = null;
 	ground5.height = null;
 
-	egg.x = 2 * width;
+	egg.x = 2 * WIDTH;
 	egg.y = null;
 	egg.width = null;
 	egg.height = null;
 
-	hidegg.x = 2 * width;
-	hidegg.y = null;
-	hidegg.width = null;
-	hidegg.height = null;
+	hidenegg.x = 2 * WIDTH;
+	hidenegg.y = null;
+	hidenegg.width = null;
+	hidenegg.height = null;
 }
 
-//customizations
+// customizations
 
 var custom = false;
 
 var ballselection = ['whiteball', 'blackball', 'blueball', 'darkblueball', 'redball', 'greenball', 'pinkball', 'purpleball', 'volleyball',
-	'soccerball', 'basketball', 'tennisball', 'bowlingball', '8ball'
+	'soccerball', 'basketball', 'tennisball', 'bowlingball', '8-ball'
 ];
 
 var characterselection = ['character1', 'character2', 'character3', 'character4', 'character5', 'character6'];
-var flipcharacterselection = ['character1flip', 'character2flip', 'character3flip', 'character4flip', 'character5flip', 'character6flip'];
+var flipcharacterselection = ['character1-flipped', 'character2-flipped', 'character3-flipped', 'character4-flipped', 'character5-flipped', 'character6-flipped'];
 
 var allballs;
 var allchars;
 
-//ball choice
+// ball choice
 var bsel = 0;
-//background choice
+// background choice
 var charsel = 0;
 
 
-//in create
+// in create
 function customizations() {
-	//customize screen background
+	// customize screen background
 	custombg = game.add.sprite(0, 0, 'custombg');
 	custombg.anchor.setTo(0, 0);
-	custombg.width = width;
-	custombg.height = height;
+	custombg.width = WIDTH;
+	custombg.height = HEIGHT;
 	custombg.visible = false;
 
-	//button to go back to main customizations page
+	// button to go back to main customizations page
 	backbutton = game.add.sprite(null, null, 'backbutton');
 	backbutton.anchor.setTo(0, 0);
 	backbutton.width = 3 * homebutton.width / 2;
@@ -2443,7 +2400,7 @@ function customizations() {
 	backbutton.events.onInputDown.add(backlistener, this);
 	backbutton.visible = false;
 
-	//button to go to main menu (w/o refresh)
+	// button to go to main menu (w/o refresh)
 	mainbutton = game.add.sprite(null, null, 'backbutton');
 	mainbutton.anchor.setTo(0, 0);
 	mainbutton.width = backbutton.width;
@@ -2454,17 +2411,17 @@ function customizations() {
 	mainbutton.events.onInputDown.add(mainbuttonlistener, this);
 	mainbutton.visible = false;
 
-	//ball display
-	dispball = game.add.sprite(width / 3, height / 2, ballselection[bsel]);
+	// ball display
+	dispball = game.add.sprite(WIDTH / 3, HEIGHT / 2, ballselection[bsel]);
 	dispball.anchor.setTo(0.5, 0.5);
-	dispball.width = 325 * wr;
-	dispball.height = 325 * hr;
+	dispball.width = 325 * WR;
+	dispball.height = 325 * HR;
 	dispball.inputEnabled = true;
 	dispball.visible = false;
 	dispball.events.onInputDown.add(ballcustoms, this);
 
-	//character display
-	dispchar = game.add.sprite(2 * width / 3, height / 2, characterselection[charsel]);
+	// character display
+	dispchar = game.add.sprite(2 * WIDTH / 3, HEIGHT / 2, characterselection[charsel]);
 	dispchar.anchor.setTo(0.5, 0.5);
 	dispchar.width = 10 * character.width / 3;
 	dispchar.height = 10 * character.height / 3;
@@ -2472,29 +2429,29 @@ function customizations() {
 	dispchar.visible = false;
 	dispchar.events.onInputDown.add(charcustoms, this);
 
-	//individual customizations
+	// individual customizations
 
-	//characters
-	char1 = game.add.sprite(1 * (width - 6 * character.width) / 4, height / 4, characterselection[0]);
+	// characters
+	char1 = game.add.sprite(1 * (WIDTH - 6 * character.width) / 4, HEIGHT / 4, characterselection[0]);
 	char2 = game.add.sprite(
-		2 * (width - 6 * character.width) / 4 + 2 * character.width,
-		height / 4,
+		2 * (WIDTH - 6 * character.width) / 4 + 2 * character.width,
+		HEIGHT / 4,
 		characterselection[1]
 	);
 	char3 = game.add.sprite(
-		3 * (width - 6 * character.width) / 4 + 4 * character.width,
-		height / 4,
+		3 * (WIDTH - 6 * character.width) / 4 + 4 * character.width,
+		HEIGHT / 4,
 		characterselection[2]
 	);
-	char4 = game.add.sprite(1 * (width - 6 * character.width) / 4, 3 * height / 4, characterselection[3]);
+	char4 = game.add.sprite(1 * (WIDTH - 6 * character.width) / 4, 3 * HEIGHT / 4, characterselection[3]);
 	char5 = game.add.sprite(
-		2 * (width - 6 * character.width) / 4 + 2 * character.width,
-		3 * height / 4,
+		2 * (WIDTH - 6 * character.width) / 4 + 2 * character.width,
+		3 * HEIGHT / 4,
 		characterselection[4]
 	);
 	char6 = game.add.sprite(
-		3 * (width - 6 * character.width) / 4 + 4 * character.width,
-		3 * height / 4,
+		3 * (WIDTH - 6 * character.width) / 4 + 4 * character.width,
+		3 * HEIGHT / 4,
 		characterselection[5]
 	);
 
@@ -2511,32 +2468,32 @@ function customizations() {
 	}
 
 
-	//balls
-	ball1 = game.add.sprite(width / 8 + 0 * width / 4, height / 8 + 0 * height / 4, ballselection[0]);
-	ball2 = game.add.sprite(width / 8 + 1 * width / 4, height / 8 + 0 * height / 4, ballselection[1]);
-	ball3 = game.add.sprite(width / 8 + 2 * width / 4, height / 8 + 0 * height / 4, ballselection[2]);
-	ball4 = game.add.sprite(width / 8 + 3 * width / 4, height / 8 + 0 * height / 4, ballselection[3]);
+	// balls
+	ball1 = game.add.sprite(WIDTH / 8 + 0 * WIDTH / 4, HEIGHT / 8 + 0 * HEIGHT / 4, ballselection[0]);
+	ball2 = game.add.sprite(WIDTH / 8 + 1 * WIDTH / 4, HEIGHT / 8 + 0 * HEIGHT / 4, ballselection[1]);
+	ball3 = game.add.sprite(WIDTH / 8 + 2 * WIDTH / 4, HEIGHT / 8 + 0 * HEIGHT / 4, ballselection[2]);
+	ball4 = game.add.sprite(WIDTH / 8 + 3 * WIDTH / 4, HEIGHT / 8 + 0 * HEIGHT / 4, ballselection[3]);
 
-	ball5 = game.add.sprite(width / 8 + 0 * width / 4, height / 8 + 1 * height / 4, ballselection[4]);
-	ball6 = game.add.sprite(width / 8 + 1 * width / 4, height / 8 + 1 * height / 4, ballselection[5]);
-	ball7 = game.add.sprite(width / 8 + 2 * width / 4, height / 8 + 1 * height / 4, ballselection[6]);
-	ball8 = game.add.sprite(width / 8 + 3 * width / 4, height / 8 + 1 * height / 4, ballselection[7]);
+	ball5 = game.add.sprite(WIDTH / 8 + 0 * WIDTH / 4, HEIGHT / 8 + 1 * HEIGHT / 4, ballselection[4]);
+	ball6 = game.add.sprite(WIDTH / 8 + 1 * WIDTH / 4, HEIGHT / 8 + 1 * HEIGHT / 4, ballselection[5]);
+	ball7 = game.add.sprite(WIDTH / 8 + 2 * WIDTH / 4, HEIGHT / 8 + 1 * HEIGHT / 4, ballselection[6]);
+	ball8 = game.add.sprite(WIDTH / 8 + 3 * WIDTH / 4, HEIGHT / 8 + 1 * HEIGHT / 4, ballselection[7]);
 
-	ball9 = game.add.sprite(width / 8 + 0 * width / 4, height / 8 + 2 * height / 4, ballselection[8]);
-	ball10 = game.add.sprite(width / 8 + 1 * width / 4, height / 8 + 2 * height / 4, ballselection[9]);
-	ball11 = game.add.sprite(width / 8 + 2 * width / 4, height / 8 + 2 * height / 4, ballselection[10]);
-	ball12 = game.add.sprite(width / 8 + 3 * width / 4, height / 8 + 2 * height / 4, ballselection[11]);
+	ball9 = game.add.sprite(WIDTH / 8 + 0 * WIDTH / 4, HEIGHT / 8 + 2 * HEIGHT / 4, ballselection[8]);
+	ball10 = game.add.sprite(WIDTH / 8 + 1 * WIDTH / 4, HEIGHT / 8 + 2 * HEIGHT / 4, ballselection[9]);
+	ball11 = game.add.sprite(WIDTH / 8 + 2 * WIDTH / 4, HEIGHT / 8 + 2 * HEIGHT / 4, ballselection[10]);
+	ball12 = game.add.sprite(WIDTH / 8 + 3 * WIDTH / 4, HEIGHT / 8 + 2 * HEIGHT / 4, ballselection[11]);
 
-	ball13 = game.add.sprite(width / 4 + 0 * width / 4, height / 8 + 3 * height / 4, ballselection[12]);
-	ball14 = game.add.sprite(width / 4 + 2 * width / 4, height / 8 + 3 * height / 4, ballselection[13]);
+	ball13 = game.add.sprite(WIDTH / 4 + 0 * WIDTH / 4, HEIGHT / 8 + 3 * HEIGHT / 4, ballselection[12]);
+	ball14 = game.add.sprite(WIDTH / 4 + 2 * WIDTH / 4, HEIGHT / 8 + 3 * HEIGHT / 4, ballselection[13]);
 
 	allballs = [ball1, ball2, ball3, ball4, ball5, ball6, ball7, ball8, ball9, ball10, ball11, ball12, ball13, ball14];
 	allballslisteners = [ball1f, ball2f, ball3f, ball4f, ball5f, ball6f, ball7f, ball8f, ball9f, ball10f, ball11f, ball12f, ball13f, ball14f];
 
 	for (var s = 0; s < allballs.length; s++) {
 		allballs[s].anchor.setTo(0.5, 0.5);
-		allballs[s].width = 150 * wr;
-		allballs[s].height = 150 * hr;
+		allballs[s].width = 150 * WR;
+		allballs[s].height = 150 * HR;
 		allballs[s].inputEnabled = true;
 		allballs[s].visible = false;
 
@@ -2544,7 +2501,7 @@ function customizations() {
 	}
 }
 
-//when customize button is pressed
+// when customize button is pressed
 function customizelistener() {
 	custombg.visible = true;
 
@@ -2557,7 +2514,7 @@ function customizelistener() {
 	dispchar.visible = true;
 }
 
-//when display ball is pressed
+// when display ball is pressed
 function ballcustoms() {
 	dispball.visible = false;
 	dispchar.visible = false;
@@ -2570,7 +2527,7 @@ function ballcustoms() {
 	mainbutton.visible = false;
 }
 
-//when display background is pressed
+// when display background is pressed
 function charcustoms() {
 	dispchar.visible = false;
 	dispball.visible = false;
@@ -2583,7 +2540,7 @@ function charcustoms() {
 	mainbutton.visible = false;
 }
 
-//when back button is pressed
+// when back button is pressed
 function backlistener() {
 	dispball.visible = true;
 	dispchar.visible = true;
@@ -2598,7 +2555,7 @@ function backlistener() {
 	mainbutton.visible = true;
 }
 
-//when main menu button is pressed
+// when main menu button is pressed
 function mainbuttonlistener() {
 	mainbutton.visible = false;
 	information.visible = true;
@@ -2622,13 +2579,13 @@ function mainbuttonlistener() {
 	}
 }
 
-//applied to all ball customizations
+// applied to all ball customizations
 function allballcustoms() {
 	// creating new ball
 	ball = game.add.sprite(ball.x, ball.y, ballselection[bsel]);
 	ball.anchor.setTo(0.5, 1);
-	ball.width = 28 * wr;
-	ball.height = 28 * hr;
+	ball.width = 28 * WR;
+	ball.height = 28 * HR;
 	game.physics.enable(ball, Phaser.Physics.ARCADE);
 	ball.body.allowGravity = true;
 	ball.body.immovable = false;
@@ -2638,11 +2595,11 @@ function allballcustoms() {
 	ball.body.bounce = new Phaser.Point(0.4, 0.4);
 	ball.visible = false;
 
-	//display ball shows customization
-	dispball = game.add.sprite(width / 3, height / 2, ballselection[bsel]);
+	// display ball shows customization
+	dispball = game.add.sprite(WIDTH / 3, HEIGHT / 2, ballselection[bsel]);
 	dispball.anchor.setTo(0.5, 0.5);
-	dispball.width = 325 * wr;
-	dispball.height = 325 * hr;
+	dispball.width = 325 * WR;
+	dispball.height = 325 * HR;
 	dispball.inputEnabled = true;
 	dispball.events.onInputDown.add(ballcustoms, this);
 	dispball.visible = true;
@@ -2650,13 +2607,13 @@ function allballcustoms() {
 	backlistener();
 }
 
-//applied to all character customizations
+// applied to all character customizations
 function allcharcustoms() {
-	//player
-	character.x = 2 * width;
-	flipcharacter.x = 2 * width;
+	// player
+	character.x = 2 * WIDTH;
+	flipcharacter.x = 2 * WIDTH;
 
-	//creating new characters
+	// creating new characters
 	character = game.add.sprite(
 		ball.x - character.width / 2 - ball.width / 2,
 		ball.y - character.height / 2,
@@ -2671,13 +2628,13 @@ function allcharcustoms() {
 	flipcharacter.visible = false;
 	character.anchor.setTo(0.5, 0.5);
 	flipcharacter.anchor.setTo(0.5, 0.5);
-	character.width = 100 * wr;
-	character.height = 171 * hr;
-	flipcharacter.width = 100 * wr;
-	flipcharacter.height = 171 * hr;
+	character.width = 100 * WR;
+	character.height = 171 * HR;
+	flipcharacter.width = 100 * WR;
+	flipcharacter.height = 171 * HR;
 
-	//setting display character to custom
-	dispchar = game.add.sprite(2 * width / 3, height / 2, characterselection[charsel]);
+	// setting display character to custom
+	dispchar = game.add.sprite(2 * WIDTH / 3, HEIGHT / 2, characterselection[charsel]);
 	dispchar.anchor.setTo(0.5, 0.5);
 	dispchar.width = 10 * character.width / 3;
 	dispchar.height = 10 * character.height / 3;
@@ -2688,7 +2645,7 @@ function allcharcustoms() {
 	backlistener();
 }
 
-//listeners for each ball
+// listeners for each ball
 function ball1f() {
 	bsel = 0;
 	allballcustoms();
@@ -2759,7 +2716,7 @@ function ball14f() {
 	allballcustoms();
 }
 
-//listeners for each character
+// listeners for each character
 function char1f() {
 	charsel = 0;
 	allcharcustoms();
