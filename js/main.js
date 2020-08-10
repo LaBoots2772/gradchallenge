@@ -82,11 +82,11 @@ if (isMobile) {
 	mobileMult = WR;
 }
 
-// if mobile device is in wrong orientation, then quit
-if (isMobile && HEIGHT > WIDTH) {
-	window.alert("Please Rotate and Refresh to Play!");
-}
-else { // run the game
+// only run the game when device is in landscape
+if (HEIGHT < WIDTH) {
+	// hide the "rotate and refresh message"
+	document.getElementById('orientation-message').style.display = 'none';
+
 	var GameState = {
 		preload: function () {
 			// all asset names
@@ -709,7 +709,8 @@ else { // run the game
 			if (Math.abs(ball.body.velocity.y + 1.9047619047619049 * mobileMult) < Math.pow(10, -10) || // normal
 				Math.abs(ball.body.velocity.y + 2.962962962962963 * mobileMult) < Math.pow(10, -10) || // bouncy ball
 				Math.abs(ball.body.velocity.y + 2.5925925925925926 * mobileMult) < Math.pow(10, -10) || // super ball
-				Math.abs(ball.body.velocity.y + 1.78888888888) < 0.05) // laser ball
+				(isMobile && Math.abs(ball.body.velocity.y + 1.78888888888 * mobileMult) < 0.05) || // laser ball
+				(!isMobile && Math.abs(ball.body.velocity.y + 1.78888888888) < 0.05))
 				stop();
 
 			// arrow direction
