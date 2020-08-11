@@ -3,7 +3,7 @@
 ### [Live Version](https://clabounty.github.io/graduationChallenge/)
 
 ## Summary
-A browser-based golf game built using the Phaser.js framework. Designed and implemented 9 unique holes, a practice mode, powerups, and a customizable ball and player.
+A browser-based golf game with 9 unique holes, a practice mode, powerups, and a customizable ball and player. Built for my high school senior project using the Phaser.js game framework.
 
 ## What I Learned
 - Key Programming Concepts
